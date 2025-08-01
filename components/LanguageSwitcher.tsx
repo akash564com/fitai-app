@@ -1,14 +1,14 @@
-// components/LanguageSwitcher.tsx
+// File: components/LanguageSwitcher.tsx
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function LanguageSwitcher() {
-  const { language, setLanguage } = useLanguage();
+  const { lang, setLang } = useLanguage();
 
   return (
     <select
-      value={language}
-      onChange={(e) => setLanguage(e.target.value)}
-      className="border rounded px-2 py-1"
+      value={lang}
+      onChange={(e) => setLang(e.target.value as "en" | "hi")}
+      className="border rounded p-1"
     >
       <option value="en">English</option>
       <option value="hi">हिन्दी</option>
