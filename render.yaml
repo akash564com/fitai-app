@@ -1,0 +1,26 @@
+# render.yaml
+services:
+  - type: web
+    name: fitai-web
+    env: node
+    plan: free
+    region: oregon        # choose closest region
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        fromSecret: RENDER_FIREBASE_API_KEY
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        fromSecret: RENDER_FIREBASE_AUTH_DOMAIN
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        fromSecret: RENDER_FIREBASE_PROJECT_ID
+      - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        fromSecret: RENDER_FIREBASE_STORAGE_BUCKET
+      - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        fromSecret: RENDER_FIREBASE_MESSAGING_SENDER_ID
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        fromSecret: RENDER_FIREBASE_APP_ID
+      - key: OPENAI_API_KEY
+        fromSecret: RENDER_OPENAI_API_KEY
+      - key: PORT
+        value: "10000"     # Render’s default for Node web services
