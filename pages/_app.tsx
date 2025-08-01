@@ -1,5 +1,5 @@
 import type { AppProps } from "next/app";
-import "@/styles/globals.css";
+import "@/styles/globals.css"; // Make sure this path is correct
 import { LanguageProvider } from "@/context/LanguageContext";
 import Navbar from "@/components/Navbar";
 
