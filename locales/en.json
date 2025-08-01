@@ -1,0 +1,10 @@
+{
+  "login": "Login",
+  "register": "Register",
+  "dashboard": "Dashboard",
+  "chatbot": "AI Chatbot",
+  "workoutPlanner": "Workout Planner",
+  "mealPlanner": "Meal Planner",
+  "logout": "Logout",
+  "welcome": "Welcome to FitAI!"
+}
