@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitAI - Your Intelligent Fitness Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'gradient-x': 'gradient-x 8s ease infinite',
+                        'float': 'float 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {'background-size':'200% 200%', 'background-position': 'left center'},
+                            '50%': {'background-size':'200% 200%', 'background-position': 'right center'}
+                        },
+                        'float': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            transition: background-color 0.3s ease;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .dark body {
+            background-color: #0f172a;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea, #764ba2, #6B8DD6, #8E37D7);
+            background-size: 400% 400%;
+            animation: gradient-x 15s ease infinite;
+        }
+        
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+        
+        .content-area {
+            transition: margin-left 0.3s ease;
+        }
+        
+        .chat-bubble {
+            border-radius: 20px;
+            max-width: 80%;
+        }
+        
+        .user-bubble {
+            background-color: #3b82f6;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .ai-bubble {
+            background-color: #e2e8f0;
+            color: #1e293b;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .dark .ai-bubble {
+            background-color: #334155;
+            color: #f1f5f9;
+        }
+        
+        .plan-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .toggle-circle {
+            transition: transform 0.3s ease;
+        }
+        
+        .dark .toggle-circle {
+            transform: translateX(24px);
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-1 {
+            animation-delay: 0s;
+        }
+        
+        .floating-2 {
+            animation-delay: 1s;
+        }
+        
+        .floating-3 {
+            animation-delay: 2s;
+        }
+        
+        .login-card {
+            transform: perspective(1000px) rotateY(0deg);
+            transition: transform 0.5s ease;
+        }
+        
+        .login-card.flipped {
+            transform: perspective(1000px) rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            backface-visibility: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <button id="sidebarToggle" class="text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div class="flex items-center">
+                    <i class="fas fa-dumbbell text-xl mr-2"></i>
+                    <h1 class="text-xl font-bold">FitAI</h1>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button id="darkModeToggle" class="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition">
+                    <i class="fas fa-moon text-white dark:hidden"></i>
+                    <i class="fas fa-sun text-yellow-300 hidden dark:block"></i>
+                </button>
+                
+                <div class="flex items-center space-x-2">
+                    <div class="relative">
+                        <button class="flex items-center focus:outline-none">
+                            <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">JD</div>
+                        </button>
+                    </div>
+                    <div class="hidden md:block">
+                        <p class="text-sm font-medium">John Doe</p>
+                        <span class="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">Premium User</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <div class="sidebar bg-white dark:bg-gray-800 shadow-lg w-64 flex flex-col transition-all duration-300">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Fitness Dashboard</h2>
+            </div>
+            
+            <nav class="flex-1 py-4">
+                <a href="#" class="flex items-center px-6 py-3 text-indigo-600 bg-indigo-50 dark:bg-gray-700 dark:text-indigo-300 border-l-4 border-indigo-600">
+                    <i class="fas fa-home mr-3"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
+                    <i class="fas fa-robot mr-3"></i>
+                    <span class="nav-text">AI Fitness Coach</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
+                    <i class="fas fa-running mr-3"></i>
+                    <span class="nav-text">Workout Plans</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
+                    <i class="fas fa-utensils mr-3"></i>
+                    <span class="nav-text">Meal Plans</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    <span class="nav-text">Progress Tracking</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
+                    <i class="fas fa-cog mr-3"></i>
+                    <span class="nav-text">Settings</span>
+                </a>
+            </nav>
+            
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                <button class="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white w-full">
+                    <i class="fas fa-sign-out-alt mr-3"></i>
+                    <span class="nav-text">Logout</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900 transition-all duration-300">
+            <div class="container mx-auto">
+                <!-- Dashboard Header -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Welcome back, John!</h2>
+                    <p class="text-gray-600 dark:text-gray-300">Ready for today's workout? Let's crush your goals!</p>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400">Workout Streak</p>
+                                <h3 class="text-2xl font-bold mt-1 dark:text-white">7 days</h3>
+                            </div>
+                            <div class="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                <i class="fas fa-fire text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400">Calories Burned</p>
+                                <h3 class="text-2xl font-bold mt-1 dark:text-white">1,240</h3>
+                            </div>
+                            <div class="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                                <i class="fas fa-burn text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400">Current Plan</p>
+                                <h3 class="text-2xl font-bold mt-1 dark:text-white">Strength</h3>
+                            </div>
+                            <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                <i class="fas fa-dumbbell text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400">Weekly Goal</p>
+                                <h3 class="text-2xl font-bold mt-1 dark:text-white">85%</h3>
+                            </div>
+                            <div class="relative w-14 h-14">
+                                <svg class="w-full h-full" viewBox="0 0 36 36">
+                                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                                        fill="none" 
+                                        stroke="#e6e6e6" 
+                                        stroke-width="3" />
+                                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                                        fill="none" 
+                                        stroke="#3b82f6" 
+                                        stroke-width="3" 
+                                        stroke-dasharray="85, 100" 
+                                        class="progress-ring__circle" />
+                                    <text x="18" y="20.5" class="text-[0.5rem] font-bold fill-blue-500 dark:fill-blue-300" text-anchor="middle">85%</text>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content Tabs -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg mb-8">
+                    <div class="border-b border-gray-200 dark:border-gray-700">
+                        <nav class="flex -mb-px">
+                            <button class="text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 py-4 px-6 font-medium">AI Fitness Coach</button>
+                            <button class="text-gray-500 dark:text-gray-400 border-b-2 border-transparent py-4 px-6 font-medium hover:text-gray-700 dark:hover:text-gray-300">Workout Generator</button>
+                            <button class="text-gray-500 dark:text-gray-400 border-b-2 border-transparent py-4 px-6 font-medium hover:text-gray-700 dark:hover:text-gray-300">Meal Planner</button>
+                            <button class="text-gray-500 dark:text-gray-400 border-b-2 border-transparent py-4 px-6 font-medium hover:text-gray-700 dark:hover:text-gray-300">Progress Tracker</button>
+                        </nav>
+                    </div>
+                    
+                    <!-- AI Chatbot -->
+                    <div class="p-6">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mr-4">
+                                <i class="fas fa-robot text-indigo-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg dark:text-white">Your AI Fitness Coach</h3>
+                                <p class="text-gray-600 dark:text-gray-400">Ask me anything about fitness, nutrition, or motivation</p>
+                            </div>
+                        </div>
+                        
+                        <div class="h-96 overflow-y-auto mb-6 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4">
+                            <!-- Chat Messages -->
+                            <div class="space-y-4">
+                                <!-- AI Message -->
+                                <div class="flex">
+                                    <div class="flex-shrink-0 mr-3">
+                                        <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                                            <i class="fas fa-robot text-indigo-600 text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ai-bubble chat-bubble p-4">
+                                        <p>Hello John! I'm your AI fitness coach. How can I assist you with your fitness journey today? You can ask me about workout routines, nutrition advice, or even motivation tips!</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Message -->
+                                <div class="flex justify-end">
+                                    <div class="user-bubble chat-bubble p-4">
+                                        <p>Can you suggest a 20-minute HIIT workout I can do at home without equipment?</p>
+                                    </div>
+                                    <div class="flex-shrink-0 ml-3">
+                                        <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                                            <span class="text-white text-sm font-bold">JD</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- AI Message -->
+                                <div class="flex">
+                                    <div class="flex-shrink-0 mr-3">
+                                        <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                                            <i class="fas fa-robot text-indigo-600 text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ai-bubble chat-bubble p-4">
+                                        <p class="font-semibold mb-1">20-Minute No Equipment HIIT Workout:</p>
+                                        <ul class="list-disc pl-5 space-y-1">
+                                            <li>Warm-up (3 min): Jumping jacks, arm circles, leg swings</li>
+                                            <li>Circuit 1 (repeat 3x):
+                                                <ul class="list-disc pl-5 mt-1">
+                                                    <li>Burpees - 45 seconds</li>
+                                                    <li>Mountain climbers - 45 seconds</li>
+                                                    <li>Rest - 30 seconds</li>
+                                                </ul>
+                                            </li>
+                                            <li>Circuit 2 (repeat 3x):
+                                                <ul class="list-disc pl-5 mt-1">
+                                                    <li>Squat jumps - 45 seconds</li>
+                                                    <li>Push-ups - 45 seconds</li>
+                                                    <li>Rest - 30 seconds</li>
+                                                </ul>
+                                            </li>
+                                            <li>Cool down (2 min): Stretching all major muscle groups</li>
+                                        </ul>
+                                        <p class="mt-2">Remember to stay hydrated and listen to your body! You got this! 💪</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chat Input -->
+                        <div class="flex">
+                            <input type="text" placeholder="Ask your fitness question..." class="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-r-lg font-medium transition">
+                                <i class="fas fa-paper-plane mr-2"></i> Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Plan Generators -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <!-- Workout Plan Generator -->
+                    <div class="plan-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mr-4">
+                                <i class="fas fa-running text-orange-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg dark:text-white">Personalized Workout Plan</h3>
+                                <p class="text-gray-600 dark:text-gray-400">Generate a custom workout plan based on your goals</p>
+                            </div>
+                        </div>
+                        
+                        <form class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Fitness Goal</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option>Weight Loss</option>
+                                    <option selected>Muscle Building</option>
+                                    <option>Strength Training</option>
+                                    <option>Endurance</option>
+                                    <option>General Fitness</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Experience Level</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option>Beginner</option>
+                                    <option selected>Intermediate</option>
+                                    <option>Advanced</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Workout Duration</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option>15-20 minutes</option>
+                                    <option selected>30-45 minutes</option>
+                                    <option>60+ minutes</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Days per Week</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option>2 days</option>
+                                    <option>3 days</option>
+                                    <option selected>4 days</option>
+                                    <option>5 days</option>
+                                    <option>6 days</option>
+                                </select>
+                            </div>
+                            
+                            <button class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-3 rounded-lg font-medium transition shadow-md hover:shadow-lg">
+                                <i class="fas fa-bolt mr-2"></i> Generate Workout Plan
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Meal Plan Generator -->
+                    <div class="plan-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mr-4">
+                                <i class="fas fa-utensils text-green-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg dark:text-white">Personalized Meal Plan</h3>
+                                <p class="text-gray-600 dark:text-gray-400">Get a nutrition plan tailored to your dietary needs</p>
+                            </div>
+                        </div>
+                        
+                        <form class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Calorie Goal</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option>1500-1800 (Weight Loss)</option>
+                                    <option selected>2000-2200 (Maintenance)</option>
+                                    <option>2500-2800 (Muscle Gain)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Dietary Preference</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option>Balanced</option>
+                                    <option>High Protein</option>
+                                    <option selected>Low Carb</option>
+                                    <option>Mediterranean</option>
+                                    <option>Vegetarian</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Allergies/Restrictions</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option selected>None</option>
+                                    <option>Dairy-Free</option>
+                                    <option>Gluten-Free</option>
+                                    <option>Nut-Free</option>
+                                    <option>Pescatarian</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Meals per Day</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option>3 meals</option>
+                                    <option selected>3 meals + 2 snacks</option>
+                                    <option>4 meals</option>
+                                </select>
+                            </div>
+                            
+                            <button class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 rounded-lg font-medium transition shadow-md hover:shadow-lg">
+                                <i class="fas fa-utensils mr-2"></i> Generate Meal Plan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-lg dark:text-white">Recent Workout Activity</h3>
+                        <button class="text-indigo-600 dark:text-indigo-400 font-medium">View All</button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mr-4">
+                                    <i class="fas fa-dumbbell text-indigo-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium dark:text-white">Upper Body Strength</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">45 minutes • 12 exercises</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium text-green-600">Completed</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Today, 9:30 AM</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mr-4">
+                                    <i class="fas fa-running text-red-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium dark:text-white">Cardio Session</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">30 minutes • 5.2 km run</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium text-green-600">Completed</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Yesterday, 7:00 AM</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center mr-4">
+                                    <i class="fas fa-heartbeat text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium dark:text-white">Yoga & Stretching</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">40 minutes • Flexibility</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium text-indigo-600">Scheduled</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Tomorrow, 8:00 AM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-gray-600 dark:text-gray-400 mb-4 md:mb-0">
+                    <p>&copy; 2023 FitAI. All rights reserved.</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+        
+        // Check for saved dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+        
+        // Sidebar Toggle
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const contentArea = document.querySelector('.content-area');
+        
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            if (sidebar.classList.contains('collapsed')) {
+                contentArea.classList.add('ml-16');
+            } else {
+                contentArea.classList.remove('ml-16');
+            }
+        });
+        
+        // Simulate chat interactions
+        const chatInput = document.querySelector('input[type="text"]');
+        const sendButton = document.querySelector('.content-area button');
+        
+        sendButton.addEventListener('click', () => {
+            if (chatInput.value.trim() !== '') {
+                // In a real app, this would send to the backend
+                chatInput.value = '';
+            }
+        });
+        
+        // Animated login page simulation
+        function simulateLoginAnimation() {
+            const loginCard = document.createElement('div');
+            loginCard.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-500';
+            loginCard.innerHTML = `
+                <div class="login-card relative w-96 h-96">
+                    <div class="card-front bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl shadow-2xl p-8 flex flex-col justify-center items-center text-white">
+                        <div class="absolute top-4 right-4">
+                            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                                <i class="fas fa-dumbbell text-xl"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl font-bold mb-2">Welcome to FitAI</h2>
+                            <p class="opacity-80">Your intelligent fitness companion</p>
+                        </div>
+                        
+                        <div class="w-full max-w-xs">
+                            <div class="mb-4">
+                                <label class="block mb-2 text-sm">Email</label>
+                                <input type="email" class="w-full px-4 py-3 bg-white/20 rounded-lg border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="your@email.com">
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="block mb-2 text-sm">Password</label>
+                                <input type="password" class="w-full px-4 py-3 bg-white/20 rounded-lg border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="••••••••">
+                            </div>
+                            
+                            <button class="w-full bg-white text-indigo-600 py-3 rounded-lg font-bold shadow-lg hover:bg-gray-100 transition mb-4">
+                                Sign In
+                            </button>
+                            
+                            <p class="text-center text-sm opacity-80">Don't have an account? <a href="#" class="font-bold hover:underline">Sign up</a></p>
+                        </div>
+                        
+                        <div class="absolute bottom-4 flex space-x-8">
+                            <div class="floating floating-1 w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                                <i class="fas fa-apple-alt text-xl"></i>
+                            </div>
+                            <div class="floating floating-2 w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                                <i class="fas fa-heartbeat text-xl"></i>
+                            </div>
+                            <div class="floating floating-3 w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                                <i class="fas fa-running text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(loginCard);
+            
+            // Simulate login animation
+            setTimeout(() => {
+                loginCard.style.opacity = '0';
+                setTimeout(() => {
+                    loginCard.remove();
+                }, 500);
+            }, 3000);
+        }
+        
+        // Run login simulation on page load
+        window.addEventListener('load', simulateLoginAnimation);
+    </script>
+</body>
+</html>
