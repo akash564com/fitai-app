@@ -63,7 +63,32 @@ def generate_workout():
     return jsonify({'plan': plan})
 
 # Add other routes: login, signup, save-progress, chatbot, etc.
+from flask import Flask, render_template
 
+app = Flask(__name__)
+
+# User Routes
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/analytics')
+def analytics():
+    return render_template('analytics.html')
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
+# Admin Routes
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
+
+@app.route('/lang/<language>')
+def set_language(language):
+    # Logic to set language preference
+    return redirect(request.referrer or '/')
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
