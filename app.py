@@ -1,3 +1,9 @@
+from flask import Flask, jsonify, request, session
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
+from flask import Flask, jsonify, render_template
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify
 import sqlite3
 import openai
@@ -8,24 +14,44 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret')
 app.config['DATABASE'] = 'database.db'
 app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY')
 # app.py
-from flask import Flask, jsonify, request, session
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fitness.db'
 db = SQLAlchemy(app)
 
+
+
+
 # Database Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    is_premium = db.Column(db.Boolean, default=False)
-    subscription_end = db.Column(db.DateTime)
-    daily_chat_credits = db.Column(db.Integer, default=3)
-    daily_workout_credits = db.Column(db.Integer, default=2)
-    total_credits = db.Column(db.Integer, default=0)
-    last_reset = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ProgressLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    weight = db.Column(db.Float)
+    calories_burned = db.Column(db.Float)
+    workout_type = db.Column(db.String(50))
+    workout_duration = db.Column(db.Integer)  # in minutes
+
+class NutritionLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    protein = db.Column(db.Float)
+    carbs = db.Column(db.Float)
+    fat = db.Column(db.Float)
+    calories_consumed = db.Column(db.Float)
+
+class AIUsageLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    action_type = db.Column(db.String(20), nullable=False)  # 'chat', 'workout_gen', 'meal_plan'
+    count = db.Column(db.Integer, default=1)
 
 # Reset daily credits (cron job)
 def reset_daily_credits():
@@ -188,12 +214,80 @@ def generate_calendar():
 # Dashboard Route
 @app.route('/dashboard')
 def dashboard():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect('/login')
+    return render_template('dashboard.html')
+
+# API Endpoint for Dashboard Data
+@app.route('/api/dashboard-data')
+def dashboard_data():
+    # In a real app, we'd get the current user from the session
+    user_id = 1  # Example user
     
-    user = User.query.get(user_id)
-    return render_template('dashboard.html', user=user)
+    # Calculate date ranges
+    end_date = datetime.utcnow().date()
+    start_date_week = end_date - timedelta(days=7)
+    start_date_month = end_date - timedelta(days=30)
+    
+    # Weight data
+    weight_logs = ProgressLog.query.filter(
+        ProgressLog.user_id == user_id,
+        ProgressLog.date >= start_date_month,
+        ProgressLog.weight.isnot(None)
+    ).order_by(ProgressLog.date).all()
+    
+    weight_data = [{
+        'date': log.date.strftime('%Y-%m-%d'),
+        'weight': log.weight
+    } for log in weight_logs]
+    
+    # Workout frequency
+    workout_logs = ProgressLog.query.filter(
+        ProgressLog.user_id == user_id,
+        ProgressLog.date >= start_date_week,
+        ProgressLog.workout_type.isnot(None)
+    ).all()
+    
+    # Calories burned
+    calories_data = [{
+        'date': log.date.strftime('%Y-%m-%d'),
+        'calories': log.calories_burned
+    } for log in workout_logs]
+    
+    # Macronutrients (average for the week)
+    nutrition_logs = NutritionLog.query.filter(
+        NutritionLog.user_id == user_id,
+        NutritionLog.date >= start_date_week
+    ).all()
+    
+    if nutrition_logs:
+        avg_protein = sum(log.protein for log in nutrition_logs) / len(nutrition_logs)
+        avg_carbs = sum(log.carbs for log in nutrition_logs) / len(nutrition_logs)
+        avg_fat = sum(log.fat for log in nutrition_logs) / len(nutrition_logs)
+    else:
+        avg_protein = avg_carbs = avg_fat = 0
+    
+    # AI usage
+    ai_usage = AIUsageLog.query.filter(
+        AIUsageLog.user_id == user_id,
+        AIUsageLog.date >= start_date_week
+    ).all()
+    
+    # Return all data as JSON
+    return jsonify({
+        'weight_data': weight_data,
+        'workout_frequency': len(workout_logs),
+        'calories_data': calories_data,
+        'macronutrients': {
+            'protein': avg_protein,
+            'carbs': avg_carbs,
+            'fat': avg_fat
+        },
+        'ai_usage': {
+            'chat': sum(log.count for log in ai_usage if log.action_type == 'chat'),
+            'workout_gen': sum(log.count for log in ai_usage if log.action_type == 'workout_gen'),
+            'meal_plan': sum(log.count for log in ai_usage if log.action_type == 'meal_plan')
+        }
+    })
+
 
 # AI Feature Usage
 @app.route('/use-ai-feature', methods=['POST'])
@@ -246,6 +340,9 @@ def subscribe():
     db.session.commit()
     return jsonify({'success': True})
 
+
+
 if __name__ == '__main__':
-    init_db()
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
