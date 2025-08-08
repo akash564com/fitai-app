@@ -1,459 +1,208 @@
-from flask import Flask, render_template, request, session, g
-from flask_babel import Babel, _, gettext
-
-from flask import Flask, jsonify, request, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
-from flask import Flask, render_template, request, jsonify
-import sqlite3
-import openai
-import os
+import random
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret')
-app.config['DATABASE'] = 'database.db'
-app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY')
-app.secret_key = 'your_secret_key'
-app.config['BABEL_DEFAULT_LOCALE'] = 'en'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fitness.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
-
-
-# Configure Babel
-babel = Babel(app)
 
 # Database Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Goal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)
+    target_value = db.Column(db.String(100), nullable=False)
+    current_value = db.Column(db.String(100), default="0")
+    deadline = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    progress = db.Column(db.Integer, default=0)
 
 class ProgressLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
-    weight = db.Column(db.Float)
-    calories_burned = db.Column(db.Float)
-    workout_type = db.Column(db.String(50))
-    workout_duration = db.Column(db.Integer)  # in minutes
+    weight = db.Column(db.Float, nullable=False)
+    bmi = db.Column(db.Float, nullable=False)
+    notes = db.Column(db.Text)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
 
-class NutritionLog(db.Model):
+class WorkoutLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
-    protein = db.Column(db.Float)
-    carbs = db.Column(db.Float)
-    fat = db.Column(db.Float)
-    calories_consumed = db.Column(db.Float)
+    workout_type = db.Column(db.String(100), nullable=False)
+    duration = db.Column(db.Integer, nullable=False)
+    notes = db.Column(db.Text)
+    date_completed = db.Column(db.DateTime, default=datetime.utcnow)
 
-class AIUsageLog(db.Model):
+class Streak(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
-    action_type = db.Column(db.String(20), nullable=False)  # 'chat', 'workout_gen', 'meal_plan'
-    count = db.Column(db.Integer, default=1)
+    current_streak = db.Column(db.Integer, default=0)
+    longest_streak = db.Column(db.Integer, default=0)
+    last_activity = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Reset daily credits (cron job)
-def reset_daily_credits():
-    with app.app_context():
-        users = User.query.filter_by(is_premium=False).all()
-        for user in users:
-            if user.last_reset.date() < datetime.utcnow().date():
-                user.daily_chat_credits = 3
-                user.daily_workout_credits = 2
-                user.last_reset = datetime.utcnow()
-        db.session.commit()
+# Create database tables
+with app.app_context():
+    db.create_all()
 
-
-# Database initialization
-def init_db():
-    with app.app_context():
-        db = sqlite3.connect(app.config['DATABASE'])
-        cursor = db.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                role TEXT DEFAULT 'user'
-            )
-        ''')
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS workouts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                plan TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (id)
-            )
-        ''')
-        CREATE TABLE user (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    email TEXT UNIQUE NOT NULL
-);
-
-CREATE TABLE progress_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    date DATE NOT NULL,
-    weight REAL,
-    calories_burned REAL,
-    workout_type TEXT,
-    workout_duration INTEGER,
-    FOREIGN KEY (user_id) REFERENCES user (id)
-);
-
-CREATE TABLE nutrition_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    date DATE NOT NULL,
-    protein REAL,
-    carbs REAL,
-    fat REAL,
-    calories_consumed REAL,
-    FOREIGN KEY (user_id) REFERENCES user (id)
-);
-
-CREATE TABLE ai_usage_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    date DATE NOT NULL,
-    action_type TEXT NOT NULL,
-    count INTEGER DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES user (id)
-);
-
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    is_premium BOOLEAN DEFAULT 0,
-    subscription_end DATETIME,
-    daily_chat_credits INTEGER DEFAULT 3,
-    daily_workout_credits INTEGER DEFAULT 2,
-    total_credits INTEGER DEFAULT 0,
-    last_reset DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    amount REAL,
-    type TEXT, -- 'subscription' or 'credits'
-    plan TEXT, -- 'monthly', 'annual', 'credit-pack'
-    date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-        # Add other tables: meals, progress, etc.
-        
-        db.commit()
-
-# OpenAI integration
-def generate_workout_plan(goal, level, duration, equipment):
-    prompt = f"Create a {duration}-minute {level} workout plan for {goal} using {equipment}. Include warmup and cooldown."
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens=500,
-        temperature=0.7
-    )
-    return response.choices[0].text.strip()
-
-# Routes
-@babel.localeselector
-def get_locale():
-    # Check session first
-    if 'language' in session:
-        return session['language']
-    
-    # Then check browser preference
-    return request.accept_languages.best_match(['en', 'hi'])
-
-# Language switching endpoint
-@app.route('/set_language/<lang>')
-def set_language(lang):
-    if lang in ['en', 'hi']:
-        session['language'] = lang
-    return '', 204
-
-# Example route with translations
-@app.route('/')
-def index():
-    return render_template('index.html', 
-                           title=_("Fitness Platform"),
-                           greeting=_("Welcome to your fitness journey"))
-
-# AI endpoint with language handling
-@app.route('/ai/chat', methods=['POST'])
-def ai_chat():
-    data = request.json
-    user_message = data['message']
-    user_language = session.get('language', 'en')
-    
-    # Prepare AI prompt based on language
-    if user_language == 'hi':
-        system_prompt = "आप एक फिटनेस विशेषज्ञ हैं। हिंदी में उत्तर दें।"
-    else:
-        system_prompt = "You are a fitness expert. Respond in English."
-    
-    # Call OpenAI API (pseudo-code)
-    ai_response = call_openai_api(
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
-    )
-    
-    return jsonify({
-        'response': ai_response,
-        'language': user_language
-    })
-    
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/generate-workout', methods=['POST'])
-def generate_workout():
-    data = request.json
-    plan = generate_workout_plan(
-        data['goal'], 
-        data['level'], 
-        data['duration'], 
-        data['equipment']
-    )
-    # Save to database
-    return jsonify({'plan': plan})
-
-# Add other routes: login, signup, save-progress, chatbot, etc.
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-# User Routes
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/analytics')
-def analytics():
-    return render_template('analytics.html')
-
-@app.route('/settings')
-def settings():
-    return render_template('settings.html')
-
-# Admin Routes
-@app.route('/admin')
-def admin():
-    return render_template('admin.html')
-
-@app.route('/lang/<language>')
-def set_language(language):
-    # Logic to set language preference
-    return redirect(request.referrer or '/')
-
-from flask import Flask, render_template, request, jsonify
-import openai
-import sqlite3
-import os
-
-app = Flask(__name__)
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# AI Chatbot Route
-@app.route('/ai-chat', methods=['POST'])
-def ai_chat():
-    user_input = request.json['message']
-    
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You're a professional fitness coach"},
-            {"role": "user", "content": user_input}
-        ]
-    )
-    
-    return jsonify({
-        "text": response.choices[0].message['content'],
-        "audio": text_to_speech(response.choices[0].message['content'])
-    })
-
-# Video Form Analysis (Mock)
-@app.route('/video-form-check', methods=['POST'])
-def form_check():
-    # In production: Use OpenCV/Mediapipe for actual analysis
-    # Mock response for demo
-    feedback = [
-        "Keep your back straight during squats",
-        "Lower your hips parallel to the floor",
-        "Widen your stance by 2 inches"
-    ]
-    return jsonify({"feedback": feedback})
-
-# Habit Tracker
-@app.route('/habit-tracker', methods=['GET'])
-def habit_tracker():
-    user_id = request.args.get('user_id')
-    habits = get_user_habits(user_id)  # Fetch from SQLite
-    
-    analysis = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=f"Analyze these fitness habits: {habits}. Give improvement suggestions."
-    )
-    
-    return jsonify(analysis.choices[0].text)
-
-# Calendar Generator
-@app.route('/generate-calendar', methods=['POST'])
-def generate_calendar():
-    goal = request.json['goal']
-    schedule = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Create weekly fitness schedule"},
-            {"role": "user", "content": f"Goal: {goal}. Include workouts and meals"}
-        ]
-    )
-    return jsonify(create_ics(schedule.choices[0].message['content']))
-
-# Dashboard Route
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
-
-# API Endpoint for Dashboard Data
-@app.route('/api/dashboard-data')
-def dashboard_data():
-    # In a real app, we'd get the current user from the session
-    user_id = 1  # Example user
-    
-    # Calculate date ranges
-    end_date = datetime.utcnow().date()
-    start_date_week = end_date - timedelta(days=7)
-    start_date_month = end_date - timedelta(days=30)
-    
-    # Weight data
-    weight_logs = ProgressLog.query.filter(
-        ProgressLog.user_id == user_id,
-        ProgressLog.date >= start_date_month,
-        ProgressLog.weight.isnot(None)
-    ).order_by(ProgressLog.date).all()
-    
-    weight_data = [{
-        'date': log.date.strftime('%Y-%m-%d'),
-        'weight': log.weight
-    } for log in weight_logs]
-    
-    # Workout frequency
-    workout_logs = ProgressLog.query.filter(
-        ProgressLog.user_id == user_id,
-        ProgressLog.date >= start_date_week,
-        ProgressLog.workout_type.isnot(None)
-    ).all()
-    
-    # Calories burned
-    calories_data = [{
-        'date': log.date.strftime('%Y-%m-%d'),
-        'calories': log.calories_burned
-    } for log in workout_logs]
-    
-    # Macronutrients (average for the week)
-    nutrition_logs = NutritionLog.query.filter(
-        NutritionLog.user_id == user_id,
-        NutritionLog.date >= start_date_week
-    ).all()
-    
-    if nutrition_logs:
-        avg_protein = sum(log.protein for log in nutrition_logs) / len(nutrition_logs)
-        avg_carbs = sum(log.carbs for log in nutrition_logs) / len(nutrition_logs)
-        avg_fat = sum(log.fat for log in nutrition_logs) / len(nutrition_logs)
-    else:
-        avg_protein = avg_carbs = avg_fat = 0
-    
-    # AI usage
-    ai_usage = AIUsageLog.query.filter(
-        AIUsageLog.user_id == user_id,
-        AIUsageLog.date >= start_date_week
-    ).all()
-    
-    # Return all data as JSON
-    return jsonify({
-        'weight_data': weight_data,
-        'workout_frequency': len(workout_logs),
-        'calories_data': calories_data,
-        'macronutrients': {
-            'protein': avg_protein,
-            'carbs': avg_carbs,
-            'fat': avg_fat
-        },
-        'ai_usage': {
-            'chat': sum(log.count for log in ai_usage if log.action_type == 'chat'),
-            'workout_gen': sum(log.count for log in ai_usage if log.action_type == 'workout_gen'),
-            'meal_plan': sum(log.count for log in ai_usage if log.action_type == 'meal_plan')
+# Mock user data (for demo)
+current_user = {
+    "id": 1,
+    "username": "akash",
+    "goals": [
+        {
+            "id": 1,
+            "type": "Weight Loss",
+            "target": "Lose 5kg",
+            "deadline": "2023-07-01",
+            "created_at": "2023-05-01",
+            "progress": 65
         }
+    ],
+    "progress_logs": [
+        {"date": "2023-05-01", "weight": 75.8, "bmi": 24.8},
+        {"date": "2023-05-05", "weight": 75.2, "bmi": 24.6},
+        {"date": "2023-05-10", "weight": 74.9, "bmi": 24.5},
+        {"date": "2023-05-15", "weight": 74.5, "bmi": 24.4},
+        {"date": "2023-05-20", "weight": 74.1, "bmi": 24.3},
+        {"date": "2023-05-25", "weight": 73.8, "bmi": 24.2},
+        {"date": "2023-05-30", "weight": 73.4, "bmi": 24.1},
+        {"date": "2023-06-05", "weight": 73.0, "bmi": 24.0},
+        {"date": "2023-06-10", "weight": 72.7, "bmi": 23.9},
+        {"date": "2023-06-15", "weight": 72.5, "bmi": 24.1}
+    ],
+    "workout_logs": [
+        {"date": "2023-06-10", "type": "Cardio", "duration": 45, "notes": "Morning run"},
+        {"date": "2023-06-12", "type": "Strength", "duration": 60, "notes": "Upper body"},
+        {"date": "2023-06-14", "type": "HIIT", "duration": 30, "notes": "Intense session"},
+        {"date": "2023-06-15", "type": "Yoga", "duration": 40, "notes": "Evening stretch"}
+    ],
+    "streak": 7
+}
+
+@app.route('/')
+def dashboard():
+    return render_template('index.html', user_data=current_user)
+
+@app.route('/update_metrics', methods=['POST'])
+def update_metrics():
+    weight = float(request.form['weight'])
+    bmi = float(request.form['bmi'])
+    
+    # Add to progress logs
+    today = datetime.now().strftime("%Y-%m-%d")
+    current_user['progress_logs'].append({
+        "date": today,
+        "weight": weight,
+        "bmi": bmi
+    })
+    
+    return jsonify({"status": "success", "message": "Metrics updated!"})
+
+@app.route('/log_workout', methods=['POST'])
+def log_workout():
+    workout_type = request.form['type']
+    duration = int(request.form['duration'])
+    notes = request.form['notes']
+    
+    # Add to workout logs
+    today = datetime.now().strftime("%Y-%m-%d")
+    current_user['workout_logs'].append({
+        "date": today,
+        "type": workout_type,
+        "duration": duration,
+        "notes": notes
+    })
+    
+    # Update streak
+    current_user['streak'] += 1
+    
+    return jsonify({"status": "success", "message": "Workout logged!"})
+
+@app.route('/set_goal', methods=['POST'])
+def set_goal():
+    goal_type = request.form['type']
+    target = request.form['target']
+    deadline = request.form['deadline']
+    
+    # Create new goal
+    new_goal = {
+        "id": len(current_user['goals']) + 1,
+        "type": goal_type,
+        "target": target,
+        "deadline": deadline,
+        "created_at": datetime.now().strftime("%Y-%m-%d"),
+        "progress": 0
+    }
+    
+    current_user['goals'].append(new_goal)
+    
+    return jsonify({"status": "success", "message": "New goal set!"})
+
+@app.route('/get_progress_data')
+def get_progress_data():
+    # Prepare weight data for chart
+    weight_data = [log['weight'] for log in current_user['progress_logs']]
+    dates = [log['date'] for log in current_user['progress_logs']]
+    
+    return jsonify({
+        "weights": weight_data,
+        "dates": dates,
+        "goal_progress": current_user['goals'][0]['progress'] if current_user['goals'] else 0
     })
 
-
-# AI Feature Usage
-@app.route('/use-ai-feature', methods=['POST'])
-def use_ai_feature():
-    data = request.json
-    user_id = session.get('user_id')
-    feature = data.get('feature')  # 'chat', 'workout', etc.
+@app.route('/get_ai_feedback')
+def get_ai_feedback():
+    # Simple AI logic to provide feedback
+    weights = [log['weight'] for log in current_user['progress_logs']]
+    last_weights = weights[-3:] if len(weights) >= 3 else weights
     
-    if not user_id:
-        return jsonify({'error': 'Unauthorized'}), 401
+    feedback = ""
+    suggestions = []
     
-    user = User.query.get(user_id)
-    
-    # Reset credits if needed
-    if user.last_reset.date() < datetime.utcnow().date():
-        reset_daily_credits()
-    
-    # Check credits
-    if feature == 'chat':
-        if user.is_premium or user.daily_chat_credits > 0:
-            if not user.is_premium:
-                user.daily_chat_credits -= 1
-            # Process AI request here
-            db.session.commit()
-            return jsonify({'success': True})
+    if len(last_weights) >= 3:
+        # Check for plateau
+        if max(last_weights) - min(last_weights) < 0.5:
+            feedback = "Hey Akash, I noticed your weight has remained steady for the past few days. Would you like to revise your workout plan to break through this plateau?"
+            suggestions = [
+                "Increase cardio by 20%",
+                "Try intermittent fasting",
+                "Adjust macro ratios"
+            ]
+        # Check for significant progress
+        elif last_weights[-1] < last_weights[0] - 1.0:
+            feedback = "Great progress Akash! You've lost significant weight recently. Keep up the good work!"
+            suggestions = [
+                "Maintain your current routine",
+                "Add strength training to build muscle",
+                "Reward yourself with a healthy treat"
+            ]
         else:
-            return jsonify({'error': 'Daily limit reached', 'upgrade': True}), 402
+            feedback = "You're making steady progress Akash. Consistency is key to reaching your goals!"
+            suggestions = [
+                "Track your calories more precisely",
+                "Increase daily step count",
+                "Try a new workout class for variety"
+            ]
+    else:
+        feedback = "Welcome to FitTrack! Start logging your workouts and metrics to receive personalized feedback."
+        suggestions = [
+            "Set your first fitness goal",
+            "Log your first workout",
+            "Track your weight daily"
+        ]
     
-    # Similar logic for other features...
-
-# Subscription Route
-@app.route('/subscribe', methods=['POST'])
-def subscribe():
-    data = request.json
-    user_id = session.get('user_id')
-    plan = data.get('plan')  # 'monthly' or 'annual'
-    
-    if not user_id:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    user = User.query.get(user_id)
-    
-    # In production: Verify payment with Stripe
-    user.is_premium = True
-    if plan == 'monthly':
-        user.subscription_end = datetime.utcnow() + timedelta(days=30)
-    else:  # annual
-        user.subscription_end = datetime.utcnow() + timedelta(days=365)
-    
-    db.session.commit()
-    return jsonify({'success': True})
-
-
+    return jsonify({
+        "feedback": feedback,
+        "suggestions": suggestions
+    })
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
