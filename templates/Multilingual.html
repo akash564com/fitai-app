@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitGlobal - Multilingual Fitness Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hind:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#10b981',
+                        dark: '#1e293b',
+                        light: '#f8fafc',
+                        lang_en: '#3b82f6',
+                        lang_hi: '#ef4444'
+                    },
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif'],
+                        'hind': ['Hind', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: 0 },
+                            '100%': { opacity: 1 }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: 0 },
+                            '100%': { transform: 'translateY(0)', opacity: 1 }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        .hindi-font {
+            font-family: 'Hind', sans-serif;
+            font-size: 1.1em;
+        }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            animation: fade-in 0.8s ease-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .lang-switch {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 50px;
+            padding: 2px;
+            display: flex;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .lang-btn {
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .lang-btn.active {
+            background: white;
+        }
+        
+        .lang-btn.en.active {
+            color: #3b82f6;
+        }
+        
+        .lang-btn.hi.active {
+            color: #ef4444;
+        }
+        
+        .ai-chat-bubble {
+            border-radius: 20px;
+            max-width: 80%;
+            animation: slideUp 0.4s ease-out;
+        }
+        
+        .user-bubble {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            align-self: flex-end;
+        }
+        
+        .ai-bubble {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            align-self: flex-start;
+        }
+        
+        .animate-text {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .workout-card {
+            transition: all 0.3s ease;
+        }
+        
+        .workout-card:hover {
+            transform: scale(1.03);
+        }
+        
+        .language-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .en-tag {
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+        }
+        
+        .hi-tag {
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+        
+        .translation-container {
+            position: relative;
+        }
+        
+        .translation-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col" hx-ext="morph">
+    <!-- Navigation -->
+    <nav class="bg-dark border-b border-gray-800 py-4 sticky top-0 z-50">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-primary p-2 rounded-lg">
+                    <i class="fas fa-dumbbell text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitGlobal</h1>
+            </div>
+            
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-home mr-2"></i><span data-i18n="home">Home</span></a>
+                <a href="#" class="text-primary font-medium"><i class="fas fa-chart-line mr-2"></i><span data-i18n="dashboard">Dashboard</span></a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-fire mr-2"></i><span data-i18n="workouts">Workouts</span></a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-utensils mr-2"></i><span data-i18n="nutrition">Nutrition</span></a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-robot mr-2"></i><span data-i18n="ai_coach">AI Coach</span></a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="lang-switch">
+                    <div class="lang-btn en active" id="lang-en">EN</div>
+                    <div class="lang-btn hi" id="lang-hi">HI</div>
+                </div>
+                <div class="relative">
+                    <button class="bg-gray-800 p-2 rounded-full relative">
+                        <i class="fas fa-user text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="container mx-auto px-4 py-12 flex flex-col items-center text-center">
+        <div class="max-w-3xl">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6" data-i18n="hero_title">Your Multilingual Fitness Journey Starts Here</h1>
+            <p class="text-xl text-gray-300 mb-8" data-i18n="hero_subtitle">AI-powered workouts, nutrition plans, and coaching in English and Hindi</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button class="bg-primary hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full text-lg transition transform hover:scale-105 duration-300 ease-in-out shadow-lg" data-i18n="get_started">Get Started</button>
+                <button class="bg-transparent border-2 border-primary text-primary hover:bg-primary/10 font-bold py-3 px-8 rounded-full text-lg transition transform hover:scale-105 duration-300 ease-in-out" data-i18n="try_demo">Try Demo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-center mb-12" data-i18n="features_title">Experience Fitness in Your Language</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="card p-6">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-gradient-to-br from-blue-500 to-indigo-700 p-4 rounded-full">
+                        <i class="fas fa-language text-white text-3xl"></i>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-center mb-4" data-i18n="feature1_title">Seamless Language Switching</h3>
+                <p class="text-center text-gray-300" data-i18n="feature1_desc">Switch between English and Hindi instantly with one click. All content adapts to your preferred language.</p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="card p-6">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-gradient-to-br from-green-500 to-emerald-700 p-4 rounded-full">
+                        <i class="fas fa-robot text-white text-3xl"></i>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-center mb-4" data-i18n="feature2_title">Bilingual AI Coach</h3>
+                <p class="text-center text-gray-300" data-i18n="feature2_desc">Get personalized fitness advice in both English and Hindi. Our AI understands and responds in your language.</p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="card p-6">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-gradient-to-br from-purple-500 to-pink-700 p-4 rounded-full">
+                        <i class="fas fa-dumbbell text-white text-3xl"></i>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-center mb-4" data-i18n="feature3_title">Localized Workouts</h3>
+                <p class="text-center text-gray-300" data-i18n="feature3_desc">Workout plans adapted for cultural preferences and regional fitness trends in both languages.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chat Demo -->
+    <div class="container mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-3xl font-bold mb-6" data-i18n="ai_chat_title">Multilingual AI Fitness Coach</h2>
+                <p class="text-gray-300 mb-8" data-i18n="ai_chat_desc">Ask questions, get workout recommendations, and receive personalized advice in English or Hindi. Our AI coach understands your language preferences.</p>
+                
+                <div class="bg-gray-800 rounded-xl p-6 mb-8">
+                    <h3 class="font-bold mb-4" data-i18n="try_prompt">Try asking:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-left transition" data-i18n="prompt1">What's a good beginner workout?</button>
+                        <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-left transition hindi-font" data-i18n="prompt1_hi">शुरुआती लोगों के लिए अच्छा वर्कआउट क्या है?</button>
+                        <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-left transition" data-i18n="prompt2">Suggest a high-protein vegetarian meal</button>
+                        <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-left transition hindi-font" data-i18n="prompt2_hi">एक उच्च-प्रोटीन शाकाहारी भोजन सुझाएं</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex items-center mb-6">
+                    <div class="bg-gradient-to-br from-amber-500 to-amber-700 p-3 rounded-full mr-4">
+                        <i class="fas fa-robot text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold" data-i18n="ai_coach">AI Fitness Coach</h3>
+                        <p class="text-sm text-gray-400" data-i18n="responding">Responding in English</p>
+                    </div>
+                </div>
+                
+                <div class="h-96 overflow-y-auto space-y-4 flex flex-col pb-4">
+                    <div class="ai-chat-bubble user-bubble p-4">
+                        <p data-i18n="user_question">Can you create a 4-week weight loss plan?</p>
+                    </div>
+                    
+                    <div class="ai-chat-bubble ai-bubble p-4">
+                        <div class="translation-container">
+                            <div class="translation-toggle" data-translate="ai-response-1">
+                                <i class="fas fa-exchange-alt text-gray-400"></i>
+                            </div>
+                            <p class="mb-3" id="ai-response-1">Certainly! Here's a balanced 4-week weight loss plan with progressive intensity:</p>
+                            <p class="text-sm text-gray-400 hindi-font hidden">निश्चित रूप से! यहाँ एक संतुलित 4-सप्ताह का वजन घटाने का कार्यक्रम है जिसमें प्रगतिशील तीव्रता है:</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div class="workout-card bg-gray-900 p-4 rounded-lg relative">
+                                <span class="language-tag en-tag">EN</span>
+                                <h4 class="font-bold mb-2">Week 1: Foundation</h4>
+                                <ul class="text-sm space-y-1">
+                                    <li>• 3 days cardio (30 min)</li>
+                                    <li>• 2 days strength training</li>
+                                    <li>• Daily 10k steps</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="workout-card bg-gray-900 p-4 rounded-lg relative">
+                                <span class="language-tag hi-tag">HI</span>
+                                <h4 class="font-bold mb-2 hindi-font">सप्ताह 1: नींव</h4>
+                                <ul class="text-sm space-y-1 hindi-font">
+                                    <li>• 3 दिन कार्डियो (30 मिनट)</li>
+                                    <li>• 2 दिन स्ट्रेंथ ट्रेनिंग</li>
+                                    <li>• रोजाना 10k कदम</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex mt-4">
+                    <input type="text" placeholder="Ask a question..." class="flex-grow bg-gray-800 text-white rounded-l-lg p-4 focus:outline-none focus:ring-2 focus:ring-primary" data-i18n-placeholder="ask_placeholder">
+                    <button class="bg-primary hover:bg-indigo-700 text-white px-6 rounded-r-lg transition">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workout Plans -->
+    <div class="container mx-auto px-4 py-12">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold" data-i18n="workout_plans">Multilingual Workout Plans</h2>
+            <div class="flex items-center">
+                <span class="mr-3 text-gray-400" data-i18n="view_all">View All</span>
+                <i class="fas fa-arrow-right text-gray-400"></i>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Plan 1 -->
+            <div class="card p-6 relative overflow-hidden">
+                <div class="floating absolute -top-20 -right-20 bg-gradient-to-r from-blue-500 to-indigo-700 opacity-10 w-40 h-40 rounded-full"></div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span class="bg-blue-500/20 text-blue-500 text-sm px-3 py-1 rounded-full" data-i18n="beginner">Beginner</span>
+                            <h3 class="text-xl font-bold mt-3" data-i18n="plan1_title">30-Day Fitness Starter</h3>
+                        </div>
+                        <div class="bg-blue-500/20 p-3 rounded-lg">
+                            <i class="fas fa-running text-blue-500"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mb-6" data-i18n="plan1_desc">Perfect for those new to fitness with gradual progression</p>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <i class="fas fa-language text-gray-400 mr-2"></i>
+                            <span class="text-sm" data-i18n="available_in">Available in: EN & HI</span>
+                        </div>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition" data-i18n="view_plan">View Plan</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Plan 2 -->
+            <div class="card p-6 relative overflow-hidden">
+                <div class="floating absolute -top-20 -right-20 bg-gradient-to-r from-amber-500 to-amber-700 opacity-10 w-40 h-40 rounded-full"></div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span class="bg-amber-500/20 text-amber-500 text-sm px-3 py-1 rounded-full" data-i18n="intermediate">Intermediate</span>
+                            <h3 class="text-xl font-bold mt-3 hindi-font">वजन घटाने का कार्यक्रम</h3>
+                        </div>
+                        <div class="bg-amber-500/20 p-3 rounded-lg">
+                            <i class="fas fa-weight-scale text-amber-500"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mb-6 hindi-font">विशेष रूप से भारतीय शरीर प्रकार के लिए डिज़ाइन किया गया</p>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <i class="fas fa-language text-gray-400 mr-2"></i>
+                            <span class="text-sm" data-i18n="available_in">Available in: EN & HI</span>
+                        </div>
+                        <button class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-lg transition" data-i18n="view_plan">View Plan</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Plan 3 -->
+            <div class="card p-6 relative overflow-hidden">
+                <div class="floating absolute -top-20 -right-20 bg-gradient-to-r from-green-500 to-emerald-700 opacity-10 w-40 h-40 rounded-full"></div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span class="bg-green-500/20 text-green-500 text-sm px-3 py-1 rounded-full" data-i18n="advanced">Advanced</span>
+                            <h3 class="text-xl font-bold mt-3" data-i18n="plan3_title">Yoga & Strength Fusion</h3>
+                        </div>
+                        <div class="bg-green-500/20 p-3 rounded-lg">
+                            <i class="fas fa-spa text-green-500"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mb-6" data-i18n="plan3_desc">Combine traditional yoga with modern strength techniques</p>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <i class="fas fa-language text-gray-400 mr-2"></i>
+                            <span class="text-sm" data-i18n="available_in">Available in: EN & HI</span>
+                        </div>
+                        <button class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition" data-i18n="view_plan">View Plan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark border-t border-gray-800 py-12 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="bg-primary p-2 rounded-lg">
+                            <i class="fas fa-dumbbell text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitGlobal</h2>
+                    </div>
+                    <p class="text-gray-400 mb-6" data-i18n="footer_desc">Your multilingual fitness companion for personalized workouts, nutrition, and AI coaching.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4" data-i18n="features">Features</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="workouts">Workouts</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="nutrition">Nutrition</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="progress">Progress Tracking</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="ai_coach">AI Coach</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="community">Community</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4" data-i18n="company">Company</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="about">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="careers">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="contact">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="privacy">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition" data-i18n="terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4" data-i18n="newsletter">Subscribe to Newsletter</h3>
+                    <p class="text-gray-400 mb-4" data-i18n="newsletter_desc">Get fitness tips and updates in your preferred language.</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" class="flex-grow bg-gray-700 text-white rounded-l-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary" data-i18n-placeholder="email_placeholder">
+                        <button class="bg-primary hover:bg-indigo-700 text-white px-4 rounded-r-lg transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="mt-4 flex">
+                        <div class="lang-switch">
+                            <div class="lang-btn en active" data-newsletter-lang="en">EN</div>
+                            <div class="lang-btn hi" data-newsletter-lang="hi">HI</div>
+                        </div>
+                        <span class="ml-3 text-sm text-gray-400" data-i18n="preferred_lang">Preferred language</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-12 pt-6 text-center text-gray-500">
+                <p data-i18n="copyright">© 2023 FitGlobal. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Language JSON -->
+    <script id="lang-data" type="application/json">
+        {
+            "en": {
+                "home": "Home",
+                "dashboard": "Dashboard",
+                "workouts": "Workouts",
+                "nutrition": "Nutrition",
+                "ai_coach": "AI Coach",
+                "hero_title": "Your Multilingual Fitness Journey Starts Here",
+                "hero_subtitle": "AI-powered workouts, nutrition plans, and coaching in English and Hindi",
+                "get_started": "Get Started",
+                "try_demo": "Try Demo",
+                "features_title": "Experience Fitness in Your Language",
+                "feature1_title": "Seamless Language Switching",
+                "feature1_desc": "Switch between English and Hindi instantly with one click. All content adapts to your preferred language.",
+                "feature2_title": "Bilingual AI Coach",
+                "feature2_desc": "Get personalized fitness advice in both English and Hindi. Our AI understands and responds in your language.",
+                "feature3_title": "Localized Workouts",
+                "feature3_desc": "Workout plans adapted for cultural preferences and regional fitness trends in both languages.",
+                "ai_chat_title": "Multilingual AI Fitness Coach",
+                "ai_chat_desc": "Ask questions, get workout recommendations, and receive personalized advice in English or Hindi. Our AI coach understands your language preferences.",
+                "try_prompt": "Try asking:",
+                "prompt1": "What's a good beginner workout?",
+                "prompt1_hi": "शुरुआती लोगों के लिए अच्छा वर्कआउट क्या है?",
+                "prompt2": "Suggest a high-protein vegetarian meal",
+                "prompt2_hi": "एक उच्च-प्रोटीन शाकाहारी भोजन सुझाएं",
+                "ai_coach": "AI Fitness Coach",
+                "responding": "Responding in English",
+                "user_question": "Can you create a 4-week weight loss plan?",
+                "ask_placeholder": "Ask a question...",
+                "workout_plans": "Multilingual Workout Plans",
+                "view_all": "View All",
+                "beginner": "Beginner",
+                "plan1_title": "30-Day Fitness Starter",
+                "plan1_desc": "Perfect for those new to fitness with gradual progression",
+                "available_in": "Available in: EN & HI",
+                "view_plan": "View Plan",
+                "intermediate": "Intermediate",
+                "advanced": "Advanced",
+                "plan3_title": "Yoga & Strength Fusion",
+                "plan3_desc": "Combine traditional yoga with modern strength techniques",
+                "features": "Features",
+                "progress": "Progress Tracking",
+                "community": "Community",
+                "company": "Company",
+                "about": "About Us",
+                "careers": "Careers",
+                "contact": "Contact",
+                "privacy": "Privacy Policy",
+                "terms": "Terms of Service",
+                "newsletter": "Subscribe to Newsletter",
+                "newsletter_desc": "Get fitness tips and updates in your preferred language.",
+                "email_placeholder": "Your email",
+                "preferred_lang": "Preferred language",
+                "copyright": "© 2023 FitGlobal. All rights reserved."
+            },
+            "hi": {
+                "home": "होम",
+                "dashboard": "डैशबोर्ड",
+                "workouts": "वर्कआउट",
+                "nutrition": "पोषण",
+                "ai_coach": "एआई कोच",
+                "hero_title": "आपकी बहुभाषी फिटनेस यात्रा यहाँ से शुरू होती है",
+                "hero_subtitle": "अंग्रेजी और हिंदी में एआई-संचालित वर्कआउट, पोषण योजनाएं और कोचिंग",
+                "get_started": "शुरू करें",
+                "try_demo": "डेमो आज़माएं",
+                "features_title": "अपनी भाषा में फिटनेस का अनुभव करें",
+                "feature1_title": "सहज भाषा स्विचिंग",
+                "feature1_desc": "एक क्लिक से अंग्रेजी और हिंदी के बीच तुरंत स्विच करें। सभी सामग्री आपकी पसंदीदा भाषा में अनुकूलित होती है।",
+                "feature2_title": "द्विभाषी एआई कोच",
+                "feature2_desc": "अंग्रेजी और हिंदी दोनों में व्यक्तिगत फिटनेस सलाह प्राप्त करें। हमारा एआई आपकी भाषा समझता है और उसी में प्रतिक्रिया देता है।",
+                "feature3_title": "स्थानीयकृत वर्कआउट",
+                "feature3_desc": "सांस्कृतिक प्राथमिकताओं और क्षेत्रीय फिटनेस रुझानों के लिए अनुकूलित वर्कआउट योजनाएं।",
+                "ai_chat_title": "बहुभाषी एआई फिटनेस कोच",
+                "ai_chat_desc": "अंग्रेजी या हिंदी में प्रश्न पूछें, वर्कआउट सिफारिशें प्राप्त करें और व्यक्तिगत सलाह प्राप्त करें। हमारा एआई कोच आपकी भाषा प्राथमिकताओं को समझता है।",
+                "try_prompt": "यह पूछने का प्रयास करें:",
+                "prompt1": "What's a good beginner workout?",
+                "prompt1_hi": "शुरुआती लोगों के लिए अच्छा वर्कआउट क्या है?",
+                "prompt2": "Suggest a high-protein vegetarian meal",
+                "prompt2_hi": "एक उच्च-प्रोटीन शाकाहारी भोजन सुझाएं",
+                "ai_coach": "एआई फिटनेस कोच",
+                "responding": "हिंदी में उत्तर दे रहे हैं",
+                "user_question": "क्या आप 4 सप्ताह का वजन घटाने का कार्यक्रम बना सकते हैं?",
+                "ask_placeholder": "एक प्रश्न पूछें...",
+                "workout_plans": "बहुभाषी वर्कआउट योजनाएं",
+                "view_all": "सभी देखें",
+                "beginner": "शुरुआती",
+                "plan1_title": "30-दिवसीय फिटनेस स्टार्टर",
+                "plan1_desc": "फिटनेस में नए लोगों के लिए क्रमिक प्रगति के साथ उत्तम",
+                "available_in": "उपलब्ध: EN & HI",
+                "view_plan": "योजना देखें",
+                "intermediate": "मध्यवर्ती",
+                "advanced": "उन्नत",
+                "plan3_title": "योग और शक्ति सम्मिश्रण",
+                "plan3_desc": "पारंपरिक योग को आधुनिक शक्ति तकनीकों के साथ जोड़ें",
+                "features": "विशेषताएं",
+                "progress": "प्रगति ट्रैकिंग",
+                "community": "समुदाय",
+                "company": "कंपनी",
+                "about": "हमारे बारे में",
+                "careers": "करियर",
+                "contact": "संपर्क करें",
+                "privacy": "गोपनीयता नीति",
+                "terms": "सेवा की शर्तें",
+                "newsletter": "न्यूज़लेटर की सदस्यता लें",
+                "newsletter_desc": "अपनी पसंदीदा भाषा में फिटनेस टिप्स और अपडेट प्राप्त करें।",
+                "email_placeholder": "आपका ईमेल",
+                "preferred_lang": "पसंदीदा भाषा",
+                "copyright": "© 2023 फिटग्लोबल। सर्वाधिकार सुरक्षित।"
+            }
+        }
+    </script>
+    
+    <script>
+        // Language management system
+        const languageData = JSON.parse(document.getElementById('lang-data').textContent);
+        let currentLanguage = 'en';
+        
+        // Set language and update UI
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('preferredLanguage', lang);
+            updateUI();
+            
+            // Update language toggle
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`lang-${lang}`).classList.add('active');
+            
+            // Update font classes
+            if (lang === 'hi') {
+                document.body.classList.add('hindi-font');
+            } else {
+                document.body.classList.remove('hindi-font');
+            }
+        }
+        
+        // Update all UI elements with translations
+        function updateUI() {
+            const translations = languageData[currentLanguage];
+            
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = translations[key] || key;
+            });
+            
+            // Update placeholder texts
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = translations[key] || key;
+            });
+            
+            // Update the AI coach response language indicator
+            const respondingText = document.querySelector('[data-i18n="responding"]');
+            if (respondingText) {
+                respondingText.textContent = currentLanguage === 'en' ? 
+                    'Responding in English' : 'हिंदी में उत्तर दे रहे हैं';
+            }
+        }
+        
+        // Toggle translation visibility
+        function setupTranslationToggles() {
+            document.querySelectorAll('.translation-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-translate');
+                    const container = document.getElementById(targetId);
+                    const enText = container.querySelector('p:not(.hindi-font)');
+                    const hiText = container.querySelector('p.hindi-font');
+                    
+                    if (enText && hiText) {
+                        enText.classList.toggle('hidden');
+                        hiText.classList.toggle('hidden');
+                    }
+                });
+            });
+        }
+        
+        // Initialize language from localStorage or browser preference
+        function initLanguage() {
+            const savedLang = localStorage.getItem('preferredLanguage');
+            const browserLang = navigator.language.startsWith('hi') ? 'hi' : 'en';
+            const lang = savedLang || browserLang;
+            
+            setLanguage(lang);
+        }
+        
+        // Set up language switchers
+        document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
+        document.getElementById('lang-hi').addEventListener('click', () => setLanguage('hi'));
+        
+        // Newsletter language switcher
+        document.querySelectorAll('[data-newsletter-lang]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const lang = this.getAttribute('data-newsletter-lang');
+                document.querySelectorAll('[data-newsletter-lang]').forEach(b => {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+        
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            initLanguage();
+            setupTranslationToggles();
+        });
+    </script>
+</body>
+</html>
