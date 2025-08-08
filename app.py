@@ -7,6 +7,37 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret')
 app.config['DATABASE'] = 'database.db'
 app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY')
+# app.py
+from flask import Flask, jsonify, request, session
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fitness.db'
+db = SQLAlchemy(app)
+
+# Database Models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    is_premium = db.Column(db.Boolean, default=False)
+    subscription_end = db.Column(db.DateTime)
+    daily_chat_credits = db.Column(db.Integer, default=3)
+    daily_workout_credits = db.Column(db.Integer, default=2)
+    total_credits = db.Column(db.Integer, default=0)
+    last_reset = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Reset daily credits (cron job)
+def reset_daily_credits():
+    with app.app_context():
+        users = User.query.filter_by(is_premium=False).all()
+        for user in users:
+            if user.last_reset.date() < datetime.utcnow().date():
+                user.daily_chat_credits = 3
+                user.daily_workout_credits = 2
+                user.last_reset = datetime.utcnow()
+        db.session.commit()
+
 
 # Database initialization
 def init_db():
@@ -154,6 +185,66 @@ def generate_calendar():
     )
     return jsonify(create_ics(schedule.choices[0].message['content']))
 
+# Dashboard Route
+@app.route('/dashboard')
+def dashboard():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+    
+    user = User.query.get(user_id)
+    return render_template('dashboard.html', user=user)
+
+# AI Feature Usage
+@app.route('/use-ai-feature', methods=['POST'])
+def use_ai_feature():
+    data = request.json
+    user_id = session.get('user_id')
+    feature = data.get('feature')  # 'chat', 'workout', etc.
+    
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user = User.query.get(user_id)
+    
+    # Reset credits if needed
+    if user.last_reset.date() < datetime.utcnow().date():
+        reset_daily_credits()
+    
+    # Check credits
+    if feature == 'chat':
+        if user.is_premium or user.daily_chat_credits > 0:
+            if not user.is_premium:
+                user.daily_chat_credits -= 1
+            # Process AI request here
+            db.session.commit()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'error': 'Daily limit reached', 'upgrade': True}), 402
+    
+    # Similar logic for other features...
+
+# Subscription Route
+@app.route('/subscribe', methods=['POST'])
+def subscribe():
+    data = request.json
+    user_id = session.get('user_id')
+    plan = data.get('plan')  # 'monthly' or 'annual'
+    
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user = User.query.get(user_id)
+    
+    # In production: Verify payment with Stripe
+    user.is_premium = True
+    if plan == 'monthly':
+        user.subscription_end = datetime.utcnow() + timedelta(days=30)
+    else:  # annual
+        user.subscription_end = datetime.utcnow() + timedelta(days=365)
+    
+    db.session.commit()
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     init_db()
