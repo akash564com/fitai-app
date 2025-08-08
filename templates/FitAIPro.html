@@ -1,1 +1,771 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitAI Pro - Premium Fitness Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#10b981',
+                        premium: '#f59e0b',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'bounce-slow': 'bounce 2s infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .premium-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            color: #1e293b;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            animation: pulse-slow 2s infinite;
+        }
+        
+        .premium-card {
+            border: 2px solid #f59e0b;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, rgba(245, 158, 11, 0.1) 0%, transparent 50%, rgba(245, 158, 11, 0.1) 100%);
+            transform: rotate(45deg);
+            animation: shine 4s infinite;
+            z-index: 0;
+        }
+        
+        .premium-card > * {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .credit-counter {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .credit-counter:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .feature-locked {
+            filter: blur(2px);
+            position: relative;
+            pointer-events: none;
+        }
+        
+        .feature-locked::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            z-index: 1;
+        }
+        
+        .feature-locked .lock-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            background: rgba(30, 41, 59, 0.9);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #f59e0b;
+            border: 2px solid #f59e0b;
+            animation: pulse-slow 2s infinite;
+        }
+        
+        .plan-card {
+            transition: all 0.3s ease;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-10px);
+            border-color: #6366f1;
+        }
+        
+        .plan-card.premium {
+            border-color: #f59e0b;
+        }
+        
+        .plan-card.premium:hover {
+            transform: translateY(-10px);
+            border-color: #fbbf24;
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.2);
+        }
+        
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .progress-ring {
+            position: relative;
+        }
+        
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .subscription-form {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 16px;
+        }
+        
+        .payment-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-card:hover {
+            border-color: #6366f1;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+        
+        .payment-card.selected {
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+        
+        .credit-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #6366f1;
+        }
+        
+        @keyframes shine {
+            0% { transform: rotate(45deg) translateX(-100%); }
+            100% { transform: rotate(45deg) translateX(100%); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-dark border-b border-gray-800 py-4 sticky top-0 z-50">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-primary p-2 rounded-lg">
+                    <i class="fas fa-dumbbell text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitAI Pro</h1>
+            </div>
+            
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-home mr-2"></i>Home</a>
+                <a href="#" class="text-primary font-medium"><i class="fas fa-brain mr-2"></i>AI Tools</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-fire mr-2"></i>Workouts</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-utensils mr-2"></i>Nutrition</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center bg-gray-800 px-3 py-1 rounded-full">
+                    <i class="fas fa-coins text-yellow-400 mr-2"></i>
+                    <span class="font-bold">125</span>
+                </div>
+                <div class="relative">
+                    <button class="bg-gray-800 p-2 rounded-full relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                    </button>
+                </div>
+                <div class="relative group">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full object-cover border-2 border-primary">
+                    <div class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 hidden group-hover:block z-50">
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-user mr-2"></i>Profile</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-cog mr-2"></i>Settings</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Banner -->
+    <div class="bg-gradient-to-r from-primary to-indigo-700 py-8">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-2">Your Premium Dashboard</h2>
+                <p class="text-indigo-100 max-w-xl">Track your AI credits, subscription status, and unlock premium features</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center bg-black/20 px-6 py-3 rounded-full">
+                <div class="bg-yellow-500 text-dark font-bold px-4 py-1 rounded-full mr-3">PRO MEMBER</div>
+                <div class="text-sm">
+                    <p>Renews on: <span class="font-bold">Oct 15, 2023</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-grow container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Credits & Usage -->
+            <div class="lg:col-span-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- AI Credits Card -->
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold flex items-center">
+                                <i class="fas fa-coins text-yellow-400 mr-2"></i> AI Credits
+                            </h3>
+                            <button class="text-primary text-sm font-medium hover:underline">Buy More</button>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-gray-400 text-sm">Daily Credits</p>
+                                <p class="text-2xl font-bold">3/5 <span class="text-sm text-gray-400">remaining</span></p>
+                            </div>
+                            <div class="relative">
+                                <div class="progress-ring w-20 h-20">
+                                    <svg width="80" height="80" viewBox="0 0 80 80">
+                                        <circle class="progress-ring__circle" stroke="#10b981" stroke-width="6" stroke-dasharray="188.5" stroke-dashoffset="75.4" fill="transparent" r="30" cx="40" cy="40"/>
+                                        <circle stroke="#1e293b" stroke-width="6" fill="transparent" r="30" cx="40" cy="40"/>
+                                    </svg>
+                                    <div class="progress-text">60%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm">Chatbot Requests</span>
+                                <span class="text-sm font-bold">2/3 used</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2 mb-4">
+                                <div class="bg-secondary h-2 rounded-full" style="width: 66%"></div>
+                            </div>
+                            
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm">Workout Generations</span>
+                                <span class="text-sm font-bold">1/2 used</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-secondary h-2 rounded-full" style="width: 50%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subscription Status -->
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold flex items-center">
+                                <i class="fas fa-crown text-yellow-400 mr-2"></i> Subscription Status
+                            </h3>
+                            <div class="bg-yellow-500 text-dark text-xs font-bold px-3 py-1 rounded-full">PRO</div>
+                        </div>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="flex items-center">
+                                <div class="bg-green-500/20 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Active until Oct 15, 2023</p>
+                                    <p class="text-sm text-gray-400">Auto-renewal enabled</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="bg-blue-500/20 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-bolt text-blue-500"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Priority AI Processing</p>
+                                    <p class="text-sm text-gray-400">Faster response times</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="bg-purple-500/20 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-infinity text-purple-500"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Unlimited AI Features</p>
+                                    <p class="text-sm text-gray-400">No daily limits</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition">
+                                Manage Subscription
+                            </button>
+                            <button class="flex-1 border border-red-500 text-red-500 hover:bg-red-500/10 py-2 rounded-lg transition">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Tools Section -->
+                <div class="card p-6 mb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">AI-Powered Fitness Tools</h3>
+                        <p class="text-sm text-gray-400">Daily credits reset in <span class="font-bold">5h 22m</span></p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Chatbot Tool -->
+                        <div class="bg-gray-800 rounded-xl p-5 relative">
+                            <div class="flex items-center mb-4">
+                                <div class="credit-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <h4 class="font-bold ml-3">AI Chat Coach</h4>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-4">Get personalized fitness advice from our AI coach</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs bg-gray-700 px-2 py-1 rounded">2/3 uses today</span>
+                                <button class="bg-primary hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition">
+                                    Start Chat
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Workout Generator -->
+                        <div class="bg-gray-800 rounded-xl p-5 relative">
+                            <div class="flex items-center mb-4">
+                                <div class="credit-icon">
+                                    <i class="fas fa-dumbbell"></i>
+                                </div>
+                                <h4 class="font-bold ml-3">Workout Generator</h4>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-4">Create custom workouts based on your goals</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs bg-gray-700 px-2 py-1 rounded">1/2 uses today</span>
+                                <button class="bg-primary hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition">
+                                    Generate
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Meal Planner -->
+                        <div class="bg-gray-800 rounded-xl p-5 relative">
+                            <div class="flex items-center mb-4">
+                                <div class="credit-icon">
+                                    <i class="fas fa-utensils"></i>
+                                </div>
+                                <h4 class="font-bold ml-3">Meal Planner</h4>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-4">Get personalized meal plans with recipes</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs bg-gray-700 px-2 py-1 rounded">0/1 uses today</span>
+                                <button class="bg-primary hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition">
+                                    Create Plan
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Checker -->
+                        <div class="bg-gray-800 rounded-xl p-5 relative">
+                            <div class="flex items-center mb-4">
+                                <div class="credit-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <h4 class="font-bold ml-3">Form Checker</h4>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-4">Upload video for AI-powered form analysis</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs bg-gray-700 px-2 py-1 rounded">0/1 uses today</span>
+                                <button class="bg-primary hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition">
+                                    Analyze
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 border-t border-gray-700 pt-4">
+                        <p class="text-sm text-gray-400">Free members get limited AI features. <a href="#" class="text-primary hover:underline">Upgrade to Pro</a> for unlimited access.</p>
+                    </div>
+                </div>
+                
+                <!-- Analytics Section -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-6">Your AI Usage Analytics</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400">Total AI Requests</p>
+                            <p class="text-2xl font-bold">87</p>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400">Workouts Generated</p>
+                            <p class="text-2xl font-bold">24</p>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400">Active Days</p>
+                            <p class="text-2xl font-bold">18</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold">Last 7 Days Usage</h4>
+                            <div class="flex space-x-2">
+                                <button class="text-xs bg-gray-700 px-2 py-1 rounded">Chats</button>
+                                <button class="text-xs bg-gray-700 px-2 py-1 rounded">Workouts</button>
+                                <button class="text-xs bg-gray-700 px-2 py-1 rounded">Meals</button>
+                            </div>
+                        </div>
+                        
+                        <div class="h-48 flex items-end space-x-1">
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="bg-primary w-full rounded-t" style="height: 70%"></div>
+                                <p class="text-xs mt-2">Mon</p>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="bg-primary w-full rounded-t" style="height: 90%"></div>
+                                <p class="text-xs mt-2">Tue</p>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="bg-secondary w-full rounded-t" style="height: 40%"></div>
+                                <p class="text-xs mt-2">Wed</p>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="bg-secondary w-full rounded-t" style="height: 60%"></div>
+                                <p class="text-xs mt-2">Thu</p>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="bg-primary w-full rounded-t" style="height: 85%"></div>
+                                <p class="text-xs mt-2">Fri</p>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="bg-secondary w-full rounded-t" style="height: 30%"></div>
+                                <p class="text-xs mt-2">Sat</p>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center">
+                                <div class="bg-primary w-full rounded-t" style="height: 65%"></div>
+                                <p class="text-xs mt-2">Sun</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column - Upgrade & Premium Features -->
+            <div>
+                <!-- Upgrade Card -->
+                <div class="card p-6 mb-8">
+                    <div class="text-center mb-6">
+                        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-dark font-bold py-1 px-4 rounded-full inline-block mb-3">
+                            LIMITED TIME OFFER
+                        </div>
+                        <h3 class="text-2xl font-bold">Upgrade to Pro</h3>
+                        <p class="text-gray-400">Unlock unlimited AI features and premium content</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-4 mb-6">
+                        <div class="bg-gradient-to-r from-primary/10 to-indigo-700/10 border border-primary/30 rounded-xl p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-bold">Pro Monthly</h4>
+                                <div class="bg-primary text-white text-xs font-bold px-2 py-1 rounded">MOST POPULAR</div>
+                            </div>
+                            <div class="flex items-baseline mb-2">
+                                <span class="text-3xl font-bold">$14.99</span>
+                                <span class="text-gray-400 ml-2">/month</span>
+                            </div>
+                            <ul class="space-y-2 text-sm mb-4">
+                                <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> Unlimited AI Chat</li>
+                                <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> Unlimited Workout Generation</li>
+                                <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> Priority Processing</li>
+                                <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> Advanced Analytics</li>
+                            </ul>
+                            <button class="w-full bg-gradient-to-r from-primary to-indigo-700 hover:from-indigo-600 hover:to-primary text-white py-3 rounded-lg font-bold transition">
+                                Upgrade Now
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-yellow-500/10 to-amber-700/10 border border-yellow-500/30 rounded-xl p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-bold">Pro Annual</h4>
+                                <div class="bg-yellow-500 text-dark text-xs font-bold px-2 py-1 rounded">BEST VALUE</div>
+                            </div>
+                            <div class="flex items-baseline mb-2">
+                                <span class="text-3xl font-bold">$129</span>
+                                <span class="text-gray-400 ml-2">/year</span>
+                            </div>
+                            <p class="text-sm mb-4"><span class="line-through">$179.88</span> <span class="text-green-500 font-bold">Save 28%</span></p>
+                            <ul class="space-y-2 text-sm mb-4">
+                                <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> Everything in Monthly</li>
+                                <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> 500 Bonus AI Credits</li>
+                                <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> Exclusive Workout Plans</li>
+                                <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> Priority Support</li>
+                            </ul>
+                            <button class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-amber-500 hover:to-yellow-600 text-dark py-3 rounded-lg font-bold transition">
+                                Upgrade Now
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="text-sm text-gray-400">7-day money-back guarantee. Cancel anytime.</p>
+                    </div>
+                </div>
+                
+                <!-- Premium Features -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-6">Premium Features</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="bg-yellow-500/20 p-2 rounded-lg mr-3">
+                                <i class="fas fa-bolt text-yellow-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Priority AI Processing</h4>
+                                <p class="text-sm text-gray-400">Get faster responses from our AI systems</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-yellow-500/20 p-2 rounded-lg mr-3">
+                                <i class="fas fa-infinity text-yellow-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Unlimited AI Tools</h4>
+                                <p class="text-sm text-gray-400">No daily limits on any AI features</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-yellow-500/20 p-2 rounded-lg mr-3">
+                                <i class="fas fa-chart-line text-yellow-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Advanced Analytics</h4>
+                                <p class="text-sm text-gray-400">Track your progress with detailed insights</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-yellow-500/20 p-2 rounded-lg mr-3">
+                                <i class="fas fa-download text-yellow-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Export Workouts & Plans</h4>
+                                <p class="text-sm text-gray-400">Download PDFs of your custom plans</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-yellow-500/20 p-2 rounded-lg mr-3">
+                                <i class="fas fa-headset text-yellow-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Priority Support</h4>
+                                <p class="text-sm text-gray-400">24-hour response time from our team</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Credit Packs -->
+                <div class="card p-6 mt-8">
+                    <h3 class="text-xl font-bold mb-6">AI Credit Packs</h3>
+                    <p class="text-gray-400 text-sm mb-6">Free members can purchase extra AI credits without a subscription</p>
+                    
+                    <div class="space-y-4">
+                        <div class="payment-card flex items-center justify-between p-4">
+                            <div class="flex items-center">
+                                <div class="bg-primary/20 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-coins text-primary text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold">50 AI Credits</h4>
+                                    <p class="text-sm text-gray-400">For all AI features</p>
+                                </div>
+                            </div>
+                            <div class="text-lg font-bold">$4.99</div>
+                        </div>
+                        
+                        <div class="payment-card flex items-center justify-between p-4">
+                            <div class="flex items-center">
+                                <div class="bg-green-500/20 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-coins text-green-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold">150 AI Credits</h4>
+                                    <p class="text-sm text-gray-400">+30 bonus credits</p>
+                                </div>
+                            </div>
+                            <div class="text-lg font-bold">$12.99</div>
+                        </div>
+                        
+                        <div class="payment-card selected flex items-center justify-between p-4">
+                            <div class="flex items-center">
+                                <div class="bg-yellow-500/20 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-gem text-yellow-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold">500 AI Credits</h4>
+                                    <p class="text-sm text-gray-400">Most popular - save 40%</p>
+                                </div>
+                            </div>
+                            <div class="text-lg font-bold">$34.99</div>
+                        </div>
+                        
+                        <button class="w-full bg-gradient-to-r from-primary to-indigo-700 hover:from-indigo-600 hover:to-primary text-white py-3 rounded-lg font-bold transition mt-4">
+                            Buy Credits
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-dark border-t border-gray-800 py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="bg-primary p-2 rounded-lg">
+                            <i class="fas fa-dumbbell text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitAI Pro</h2>
+                    </div>
+                    <p class="text-gray-400">AI-powered fitness coaching for everyone.</p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Features</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">AI Workout Generator</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Nutrition Planner</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Form Analysis</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Progress Tracking</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Premium Plans</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Company</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Subscribe</h3>
+                    <p class="text-gray-400 mb-4">Get fitness tips and special offers</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" class="flex-grow bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <button class="bg-primary hover:bg-indigo-700 text-white px-4 rounded-r-lg transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
+                <p>© 2023 FitAI Pro. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Floating Upgrade Button -->
+    <div class="fixed bottom-6 right-6">
+        <button class="bg-gradient-to-r from-yellow-500 to-amber-600 text-dark font-bold py-3 px-6 rounded-full shadow-lg hover:from-amber-500 hover:to-yellow-600 transition transform hover:scale-105 flex items-center">
+            <i class="fas fa-crown mr-2"></i> Upgrade to Pro
+        </button>
+    </div>
+</body>
+</html>
