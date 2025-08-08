@@ -88,7 +88,44 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
         ''')
+        CREATE TABLE user (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE progress_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date DATE NOT NULL,
+    weight REAL,
+    calories_burned REAL,
+    workout_type TEXT,
+    workout_duration INTEGER,
+    FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+CREATE TABLE nutrition_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date DATE NOT NULL,
+    protein REAL,
+    carbs REAL,
+    fat REAL,
+    calories_consumed REAL,
+    FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+CREATE TABLE ai_usage_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date DATE NOT NULL,
+    action_type TEXT NOT NULL,
+    count INTEGER DEFAULT 1,
+    FOREIGN KEY (user_id) REFERENCES user (id)
+);
         # Add other tables: meals, progress, etc.
+        
         db.commit()
 
 # OpenAI integration
