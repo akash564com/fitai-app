@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitGlobal - Accessible Fitness Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hind:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#10b981',
+                        dark: '#1e293b',
+                        light: '#f8fafc',
+                        highcontrast: {
+                            bg: '#000',
+                            text: '#fff',
+                            primary: '#ff0'
+                        }
+                    },
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif'],
+                        'hind': ['Hind', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'bounce-slow': 'bounce 2s infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #10b981;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        body.high-contrast {
+            background: #000 !important;
+            color: #fff !important;
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #e0e7ff 0%, #d1fae5 100%);
+            color: #1e293b;
+        }
+        
+        body.light-mode.high-contrast {
+            background: #fff !important;
+            color: #000 !important;
+        }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        body.light-mode .card {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.high-contrast .card {
+            background: #000 !important;
+            border: 2px solid #ff0 !important;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hindi-font {
+            font-family: 'Hind', sans-serif;
+            font-size: 1.1em;
+        }
+        
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #000;
+            color: white;
+            padding: 8px;
+            z-index: 1000;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        .high-contrast *:focus {
+            outline: 3px solid #ff0 !important;
+        }
+        
+        .accessibility-toolbar {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 50px;
+            padding: 12px 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .accessibility-toolbar button {
+            transition: all 0.3s ease;
+        }
+        
+        .accessibility-toolbar button:hover, 
+        .accessibility-toolbar button:focus {
+            transform: scale(1.1);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .has-tooltip:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .voice-btn {
+            animation: pulse-slow 2s infinite;
+        }
+        
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body class="relative">
+    <!-- Skip Navigation Link -->
+    <a href="#main-content" class="skip-link" aria-label="Skip to main content">Skip to main content</a>
+    
+    <!-- Accessibility Toolbar -->
+    <div class="accessibility-toolbar fixed top-4 right-4 z-50 flex items-center gap-3">
+        <div class="relative has-tooltip">
+            <button id="voice-reader" class="bg-primary p-3 rounded-full text-white hover:bg-indigo-700 transition" aria-label="Read page content aloud">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <span class="tooltip">Read page aloud</span>
+        </div>
+        
+        <div class="relative has-tooltip">
+            <button id="high-contrast-toggle" class="bg-gray-700 p-3 rounded-full text-white hover:bg-gray-600 transition" aria-label="Toggle high contrast mode">
+                <i class="fas fa-adjust"></i>
+            </button>
+            <span class="tooltip">High Contrast</span>
+        </div>
+        
+        <div class="relative has-tooltip">
+            <button id="dark-mode-toggle" class="bg-gray-700 p-3 rounded-full text-white hover:bg-gray-600 transition" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+            <span class="tooltip">Dark/Light Mode</span>
+        </div>
+        
+        <div class="flex bg-gray-700 rounded-full overflow-hidden">
+            <button id="lang-en" class="lang-btn px-4 py-2 text-sm active" aria-label="Switch to English">EN</button>
+            <button id="lang-hi" class="lang-btn px-4 py-2 text-sm" aria-label="हिंदी में बदलें">HI</button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-dark border-b border-gray-800 py-4 sticky top-0 z-50" aria-label="Main navigation">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-primary p-2 rounded-lg">
+                    <i class="fas fa-dumbbell text-white text-xl" aria-hidden="true"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitGlobal</h1>
+            </div>
+            
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-light hover:text-primary transition" aria-current="page">
+                    <i class="fas fa-home mr-2" aria-hidden="true"></i><span class="nav-text">Home</span>
+                </a>
+                <a href="#" class="text-primary font-medium">
+                    <i class="fas fa-users mr-2" aria-hidden="true"></i><span class="nav-text">Community</span>
+                </a>
+                <a href="#" class="text-light hover:text-primary transition">
+                    <i class="fas fa-fire mr-2" aria-hidden="true"></i><span class="nav-text">Workouts</span>
+                </a>
+                <a href="#" class="text-light hover:text-primary transition">
+                    <i class="fas fa-utensils mr-2" aria-hidden="true"></i><span class="nav-text">Nutrition</span>
+                </a>
+                <a href="#" class="text-light hover:text-primary transition">
+                    <i class="fas fa-chart-line mr-2" aria-hidden="true"></i><span class="nav-text">Progress</span>
+                </a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="bg-gray-800 p-2 rounded-full relative" aria-label="Notifications (3 unread)">
+                        <i class="fas fa-bell text-xl" aria-hidden="true"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center notification">3</span>
+                    </button>
+                </div>
+                <div class="relative group">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User profile picture" class="w-10 h-10 rounded-full object-cover border-2 border-primary">
+                    <div class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 hidden group-hover:block z-50">
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-user mr-2" aria-hidden="true"></i>Profile</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-cog mr-2" aria-hidden="true"></i>Settings</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i>Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-grow container mx-auto px-4 py-8">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold mb-4" id="welcome-title">Welcome to FitGlobal</h2>
+            <p class="text-xl max-w-2xl mx-auto" id="welcome-subtitle">Your accessible fitness platform with multilingual support and inclusive design</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Multilingual Card -->
+            <div class="card p-6">
+                <div class="flex items-center mb-6">
+                    <div class="bg-gradient-to-br from-blue-500 to-indigo-700 p-3 rounded-lg">
+                        <i class="fas fa-globe text-white text-2xl" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold ml-4" id="multilingual-title">Multilingual Support</h3>
+                </div>
+                
+                <p class="mb-6" id="multilingual-desc">Our platform supports English and Hindi languages. Switch between languages anytime with our easy-to-use language toggle.</p>
+                
+                <div class="bg-gray-800 rounded-lg p-4 mb-6">
+                    <div class="flex items-center mb-4">
+                        <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User speaking multiple languages" class="w-12 h-12 rounded-full mr-3">
+                        <div>
+                            <h4 class="font-bold" id="example-title">Example Translation</h4>
+                            <p class="text-sm text-gray-400">Click the HI button to see Hindi</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-700 rounded-lg p-4 mb-3">
+                        <p class="mb-2" id="english-text">"What's my workout for today?"</p>
+                        <p class="hindi-font hidden" id="hindi-text">"आज के लिए मेरा वर्कआउट क्या है?"</p>
+                    </div>
+                    
+                    <button id="speak-button" class="bg-primary hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center justify-center transition w-full">
+                        <i class="fas fa-volume-up mr-2" aria-hidden="true"></i>
+                        <span id="speak-text">Speak this phrase</span>
+                    </button>
+                </div>
+                
+                <div class="text-center">
+                    <button id="try-translation" class="border border-primary text-primary hover:bg-primary/10 py-2 px-4 rounded-lg transition">
+                        <span id="try-button">Try Hindi Translation</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Accessibility Card -->
+            <div class="card p-6">
+                <div class="flex items-center mb-6">
+                    <div class="bg-gradient-to-br from-green-500 to-emerald-700 p-3 rounded-lg">
+                        <i class="fas fa-universal-access text-white text-2xl" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold ml-4">Accessibility Features</h3>
+                </div>
+                
+                <p class="mb-6">We've implemented comprehensive accessibility features to ensure everyone can use our platform comfortably.</p>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="bg-gray-800 p-2 rounded-full mr-4">
+                            <i class="fas fa-eye text-green-500" aria-hidden="true"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Visual Assistance</h4>
+                            <p>High contrast mode, text resizing, and dark/light themes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-gray-800 p-2 rounded-full mr-4">
+                            <i class="fas fa-assistive-listening-systems text-green-500" aria-hidden="true"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Audio Support</h4>
+                            <p>Text-to-speech for all content, voice navigation assistance</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-gray-800 p-2 rounded-full mr-4">
+                            <i class="fas fa-keyboard text-green-500" aria-hidden="true"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Keyboard Navigation</h4>
+                            <p>Full keyboard support, skip navigation links, clear focus states</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-gray-800 p-2 rounded-full mr-4">
+                            <i class="fas fa-brain text-green-500" aria-hidden="true"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Cognitive Support</h4>
+                            <p>Simple language, clear icons, predictable navigation</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 bg-gray-800 rounded-lg p-4">
+                    <h4 class="font-bold mb-3">Accessibility Preferences</h4>
+                    <div class="flex flex-wrap gap-3">
+                        <button id="font-increase" class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="Increase text size">
+                            <i class="fas fa-text-height mr-1" aria-hidden="true"></i> A+
+                        </button>
+                        <button id="font-decrease" class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="Decrease text size">
+                            <i class="fas fa-text-height mr-1" aria-hidden="true"></i> A-
+                        </button>
+                        <button id="simplify-ui" class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="Simplify interface">
+                            <i class="fas fa-simplify mr-1" aria-hidden="true"></i> Simplify
+                        </button>
+                        <button id="voice-control" class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="Voice control">
+                            <i class="fas fa-microphone-alt mr-1" aria-hidden="true"></i> Voice
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inclusive Workouts Card -->
+            <div class="card p-6">
+                <div class="flex items-center mb-6">
+                    <div class="bg-gradient-to-br from-purple-500 to-pink-700 p-3 rounded-lg">
+                        <i class="fas fa-heartbeat text-white text-2xl" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold ml-4" id="inclusive-title">Inclusive Workouts</h3>
+                </div>
+                
+                <p class="mb-6" id="inclusive-desc">Our AI-powered workouts adapt to all abilities and provide multiple instruction formats.</p>
+                
+                <div class="mb-6">
+                    <h4 class="font-bold mb-3" id="workout-title">Today's Featured Workout</h4>
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="flex items-center mb-3">
+                            <div class="bg-primary p-2 rounded-lg mr-3">
+                                <i class="fas fa-running text-white" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-bold" id="workout-name">Beginner's Cardio Blast</h5>
+                                <p class="text-sm text-gray-400" id="workout-duration">Duration: 20 mins</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-gray-700 px-2 py-1 rounded text-xs">Low Impact</span>
+                            <span class="bg-gray-700 px-2 py-1 rounded text-xs">Seated Option</span>
+                            <span class="bg-gray-700 px-2 py-1 rounded text-xs">Beginner</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg flex items-center transition">
+                                <i class="fas fa-play mr-2" aria-hidden="true"></i>
+                                <span id="start-button">Start</span>
+                            </button>
+                            
+                            <div class="flex space-x-2">
+                                <button class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="View text instructions">
+                                    <i class="fas fa-file-alt" aria-hidden="true"></i>
+                                </button>
+                                <button class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="Listen to audio instructions">
+                                    <i class="fas fa-headphones" aria-hidden="true"></i>
+                                </button>
+                                <button class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="Watch video demonstration">
+                                    <i class="fas fa-video" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold mb-3">Accessibility Features</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2" aria-hidden="true"></i>
+                            <span>Video captions in multiple languages</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2" aria-hidden="true"></i>
+                            <span>Audio descriptions for visual content</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2" aria-hidden="true"></i>
+                            <span>Adaptive modifications for all exercises</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2" aria-hidden="true"></i>
+                            <span>Text alternatives for all visual content</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Section -->
+        <div class="card p-6 mt-12">
+            <div class="flex items-center mb-6">
+                <div class="bg-gradient-to-br from-yellow-500 to-orange-700 p-3 rounded-lg">
+                    <i class="fas fa-cog text-white text-2xl" aria-hidden="true"></i>
+                </div>
+                <h2 class="text-2xl font-bold ml-4">Accessibility & Language Settings</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Language Preferences</h3>
+                    <div class="bg-gray-800 rounded-lg p-4 mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span>Interface Language</span>
+                            <div class="flex bg-gray-700 rounded-full overflow-hidden">
+                                <button id="settings-lang-en" class="lang-btn px-4 py-2 text-sm active">English</button>
+                                <button id="settings-lang-hi" class="lang-btn px-4 py-2 text-sm hindi-font">हिंदी</button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span>Workout Instructions</span>
+                            <div class="relative">
+                                <select class="bg-gray-700 text-white py-2 px-4 rounded-lg w-32" aria-label="Select workout instruction language">
+                                    <option>Same as Interface</option>
+                                    <option>English</option>
+                                    <option>Hindi</option>
+                                    <option>Punjabi</option>
+                                    <option>Bengali</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <h4 class="font-bold mb-3">Translation Preferences</h4>
+                        <div class="flex items-center mb-3">
+                            <input type="checkbox" id="auto-translate" class="mr-2 w-5 h-5" checked>
+                            <label for="auto-translate">Automatically translate community content</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="show-original" class="mr-2 w-5 h-5">
+                            <label for="show-original">Show original text alongside translation</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Accessibility Preferences</h3>
+                    <div class="bg-gray-800 rounded-lg p-4 mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span>Color Mode</span>
+                            <div class="flex space-x-2">
+                                <button id="mode-light" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg text-sm">Light</button>
+                                <button id="mode-dark" class="bg-primary text-white px-3 py-1 rounded-lg text-sm">Dark</button>
+                                <button id="mode-contrast" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg text-sm">High Contrast</button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-3">
+                            <span>Text Size</span>
+                            <div class="flex space-x-1">
+                                <button class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="Decrease text size">A-</button>
+                                <button class="bg-gray-700 p-2 rounded-lg">Default</button>
+                                <button class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg" aria-label="Increase text size">A+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span>Animation Effects</span>
+                            <div class="relative">
+                                <select class="bg-gray-700 text-white py-2 px-4 rounded-lg" aria-label="Select animation preference">
+                                    <option>Full Animations</option>
+                                    <option>Reduced Motion</option>
+                                    <option>No Animations</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <h4 class="font-bold mb-3">Additional Settings</h4>
+                        <div class="flex items-center mb-3">
+                            <input type="checkbox" id="voice-guides" class="mr-2 w-5 h-5" checked>
+                            <label for="voice-guides">Enable voice navigation guides</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="keyboard-shortcuts" class="mr-2 w-5 h-5">
+                            <label for="keyboard-shortcuts">Enable keyboard shortcuts</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end mt-6">
+                <button class="bg-primary hover:bg-indigo-700 text-white py-2 px-6 rounded-lg transition mr-3">
+                    Save Preferences
+                </button>
+                <button class="border border-primary text-primary hover:bg-primary/10 py-2 px-6 rounded-lg transition">
+                    Reset to Defaults
+                </button>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-dark border-t border-gray-800 py-8 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="bg-primary p-2 rounded-lg">
+                            <i class="fas fa-dumbbell text-white text-xl" aria-hidden="true"></i>
+                        </div>
+                        <h2 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitGlobal</h2>
+                    </div>
+                    <p class="text-gray-400">Join our inclusive fitness community to achieve your goals together.</p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Features</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Workout Plans</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Nutrition Tracking</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Community Challenges</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">AI Coaching</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Accessibility Tools</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Resources</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Accessibility Guide</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Multilingual Support</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Inclusive Workouts</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Community Guidelines</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Help Center</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Newsletter</h3>
+                    <p class="text-gray-400 mb-4">Subscribe to get fitness tips and updates</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" aria-label="Your email address" class="flex-grow bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <button class="bg-primary hover:bg-indigo-700 text-white px-4 rounded-r-lg transition" aria-label="Subscribe">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
+                <p>© 2023 FitGlobal. All rights reserved. Designed with accessibility in mind.</p>
+                <div class="mt-2">
+                    <a href="#" class="text-gray-400 hover:text-primary transition mx-2">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition mx-2">Terms of Service</a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition mx-2">Accessibility Statement</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Language switching functionality
+        const langEn = document.getElementById('lang-en');
+        const langHi = document.getElementById('lang-hi');
+        const settingsLangEn = document.getElementById('settings-lang-en');
+        const settingsLangHi = document.getElementById('settings-lang-hi');
+        const tryTranslation = document.getElementById('try-translation');
+        const speakButton = document.getElementById('speak-button');
+        const englishText = document.getElementById('english-text');
+        const hindiText = document.getElementById('hindi-text');
+        const navTexts = document.querySelectorAll('.nav-text');
+        const titleElements = {
+            'welcome-title': ['Welcome to FitGlobal', 'फिटग्लोबल में आपका स्वागत है'],
+            'welcome-subtitle': [
+                'Your accessible fitness platform with multilingual support and inclusive design',
+                'बहुभाषी समर्थन और समावेशी डिजाइन के साथ आपका सुलभ फिटनेस प्लेटफॉर्म'
+            ],
+            'multilingual-title': ['Multilingual Support', 'बहुभाषी समर्थन'],
+            'multilingual-desc': [
+                'Our platform supports English and Hindi languages. Switch between languages anytime with our easy-to-use language toggle.',
+                'हमारा प्लेटफॉर्म अंग्रेजी और हिंदी भाषाओं का समर्थन करता है। हमारे उपयोग में आसान भाषा टॉगल के साथ कभी भी भाषाओं के बीच स्विच करें।'
+            ],
+            'example-title': ['Example Translation', 'उदाहरण अनुवाद'],
+            'speak-text': ['Speak this phrase', 'इस वाक्यांश को बोलें'],
+            'try-button': ['Try Hindi Translation', 'हिंदी अनुवाद आज़माएं'],
+            'inclusive-title': ['Inclusive Workouts', 'समावेशी वर्कआउट'],
+            'inclusive-desc': [
+                'Our AI-powered workouts adapt to all abilities and provide multiple instruction formats.',
+                'हमारे एआई-संचालित वर्कआउट सभी क्षमताओं के अनुकूल होते हैं और कई निर्देश प्रारूप प्रदान करते हैं।'
+            ],
+            'workout-title': ["Today's Featured Workout", "आज का फीचर्ड वर्कआउट"],
+            'workout-name': ["Beginner's Cardio Blast", "शुरुआती कार्डियो ब्लास्ट"],
+            'workout-duration': ["Duration: 20 mins", "अवधि: 20 मिनट"],
+            'start-button': ['Start', 'शुरू करें']
+        };
+        
+        // Set active language button
+        function setActiveLanguage(lang) {
+            const langButtons = [langEn, langHi, settingsLangEn, settingsLangHi];
+            langButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.id.includes(lang)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // Update text elements based on language
+        function updateTextElements(lang) {
+            const isHindi = lang === 'hi';
+            
+            // Update title elements
+            for (const [id, texts] of Object.entries(titleElements)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = isHindi ? texts[1] : texts[0];
+                    if (id === 'welcome-title' || id === 'inclusive-title' || id === 'multilingual-title') {
+                        element.classList.toggle('hindi-font', isHindi);
+                    }
+                }
+            }
+            
+            // Update navigation texts
+            const navTranslations = {
+                'Home': 'होम',
+                'Community': 'समुदाय',
+                'Workouts': 'वर्कआउट',
+                'Nutrition': 'पोषण',
+                'Progress': 'प्रगति'
+            };
+            
+            navTexts.forEach(element => {
+                const englishText = element.textContent;
+                if (isHindi && navTranslations[englishText]) {
+                    element.textContent = navTranslations[englishText];
+                    element.classList.add('hindi-font');
+                } else if (!isHindi) {
+                    // Revert to English
+                    for (const [en, hi] of Object.entries(navTranslations)) {
+                        if (element.textContent === hi) {
+                            element.textContent = en;
+                            element.classList.remove('hindi-font');
+                        }
+                    }
+                }
+            });
+            
+            // Toggle example text
+            englishText.classList.toggle('hidden', isHindi);
+            hindiText.classList.toggle('hidden', !isHindi);
+            hindiText.classList.toggle('hindi-font', isHindi);
+        }
+        
+        // Event listeners for language buttons
+        [langEn, langHi, settingsLangEn, settingsLangHi].forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.id.includes('en') ? 'en' : 'hi';
+                setActiveLanguage(lang);
+                updateTextElements(lang);
+                localStorage.setItem('preferredLanguage', lang);
+            });
+        });
+        
+        // Try translation button
+        tryTranslation.addEventListener('click', () => {
+            const isHindi = langHi.classList.contains('active');
+            setActiveLanguage(isHindi ? 'en' : 'hi');
+            updateTextElements(isHindi ? 'en' : 'hi');
+        });
+        
+        // Speak button functionality
+        speakButton.addEventListener('click', () => {
+            const isHindi = langHi.classList.contains('active');
+            const text = isHindi ? hindiText.textContent : englishText.textContent;
+            
+            // In a real app, this would use the Web Speech API
+            alert(`Text-to-speech would say: "${text}"`);
+        });
+        
+        // Accessibility toggles
+        const highContrastToggle = document.getElementById('high-contrast-toggle');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        
+        highContrastToggle.addEventListener('click', () => {
+            document.body.classList.toggle('high-contrast');
+            localStorage.setItem('highContrast', document.body.classList.contains('high-contrast'));
+        });
+        
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('lightMode', document.body.classList.contains('light-mode'));
+        });
+        
+        // Load preferences from localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            // Language
+            const preferredLanguage = localStorage.getItem('preferredLanguage') || 'en';
+            setActiveLanguage(preferredLanguage);
+            updateTextElements(preferredLanguage);
+            
+            // High contrast mode
+            if (localStorage.getItem('highContrast') === 'true') {
+                document.body.classList.add('high-contrast');
+            }
+            
+            // Light mode
+            if (localStorage.getItem('lightMode') === 'true') {
+                document.body.classList.add('light-mode');
+            }
+            
+            // Text size controls
+            document.getElementById('font-increase').addEventListener('click', () => {
+                document.body.style.fontSize = '110%';
+            });
+            
+            document.getElementById('font-decrease').addEventListener('click', () => {
+                document.body.style.fontSize = '90%';
+            });
+            
+            // Color mode buttons in settings
+            document.getElementById('mode-light').addEventListener('click', () => {
+                document.body.classList.add('light-mode');
+                document.body.classList.remove('high-contrast');
+                localStorage.setItem('lightMode', 'true');
+                localStorage.setItem('highContrast', 'false');
+            });
+            
+            document.getElementById('mode-dark').addEventListener('click', () => {
+                document.body.classList.remove('light-mode');
+                document.body.classList.remove('high-contrast');
+                localStorage.setItem('lightMode', 'false');
+                localStorage.setItem('highContrast', 'false');
+            });
+            
+            document.getElementById('mode-contrast').addEventListener('click', () => {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('high-contrast');
+                localStorage.setItem('lightMode', 'false');
+                localStorage.setItem('highContrast', 'true');
+            });
+            
+            // Initialize tooltips
+            document.querySelectorAll('.has-tooltip').forEach(element => {
+                element.addEventListener('focus', () => {
+                    element.querySelector('.tooltip').style.opacity = '1';
+                });
+                
+                element.addEventListener('blur', () => {
+                    element.querySelector('.tooltip').style.opacity = '0';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
