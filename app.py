@@ -124,6 +124,27 @@ CREATE TABLE ai_usage_log (
     count INTEGER DEFAULT 1,
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
+
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    is_premium BOOLEAN DEFAULT 0,
+    subscription_end DATETIME,
+    daily_chat_credits INTEGER DEFAULT 3,
+    daily_workout_credits INTEGER DEFAULT 2,
+    total_credits INTEGER DEFAULT 0,
+    last_reset DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    amount REAL,
+    type TEXT, -- 'subscription' or 'credits'
+    plan TEXT, -- 'monthly', 'annual', 'credit-pack'
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
         # Add other tables: meals, progress, etc.
         
         db.commit()
