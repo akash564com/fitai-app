@@ -89,6 +89,72 @@ def admin():
 def set_language(language):
     # Logic to set language preference
     return redirect(request.referrer or '/')
+
+from flask import Flask, render_template, request, jsonify
+import openai
+import sqlite3
+import os
+
+app = Flask(__name__)
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# AI Chatbot Route
+@app.route('/ai-chat', methods=['POST'])
+def ai_chat():
+    user_input = request.json['message']
+    
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You're a professional fitness coach"},
+            {"role": "user", "content": user_input}
+        ]
+    )
+    
+    return jsonify({
+        "text": response.choices[0].message['content'],
+        "audio": text_to_speech(response.choices[0].message['content'])
+    })
+
+# Video Form Analysis (Mock)
+@app.route('/video-form-check', methods=['POST'])
+def form_check():
+    # In production: Use OpenCV/Mediapipe for actual analysis
+    # Mock response for demo
+    feedback = [
+        "Keep your back straight during squats",
+        "Lower your hips parallel to the floor",
+        "Widen your stance by 2 inches"
+    ]
+    return jsonify({"feedback": feedback})
+
+# Habit Tracker
+@app.route('/habit-tracker', methods=['GET'])
+def habit_tracker():
+    user_id = request.args.get('user_id')
+    habits = get_user_habits(user_id)  # Fetch from SQLite
+    
+    analysis = openai.Completion.create(
+        model="text-davinci-003",
+        prompt=f"Analyze these fitness habits: {habits}. Give improvement suggestions."
+    )
+    
+    return jsonify(analysis.choices[0].text)
+
+# Calendar Generator
+@app.route('/generate-calendar', methods=['POST'])
+def generate_calendar():
+    goal = request.json['goal']
+    schedule = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Create weekly fitness schedule"},
+            {"role": "user", "content": f"Goal: {goal}. Include workouts and meals"}
+        ]
+    )
+    return jsonify(create_ics(schedule.choices[0].message['content']))
+
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
