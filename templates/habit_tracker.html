@@ -1,0 +1,32 @@
+<div class="habit-tracker">
+  <div class="consistency-chart">
+    <canvas id="habitChart"></canvas>
+  </div>
+  <div class="ai-feedback">
+    <h3>Coach's Recommendation:</h3>
+    <p id="aiSuggestion"></p>
+  </div>
+</div>
+
+<script>
+// Chart.js implementation
+const ctx = document.getElementById('habitChart').getContext('2d');
+const habitChart = new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [{
+      label: 'Workout Completion',
+      data: [1, 0, 1, 1, 0, 1, 0],
+      backgroundColor: '#4CAF50'
+    }]
+  }
+});
+
+// Fetch AI suggestions
+fetch('/habit-tracker?user_id=123')
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById('aiSuggestion').textContent = data;
+  });
+</script>
