@@ -1,6 +1,6 @@
 openai
 python-dotenv
-sqlite3
-Flask==2.2.2
-Flask-SQLAlchemy==3.0.3
-python-dotenv==1.0.0
+flask
+firebase-admin
+gunicorn
+sqlalchemy
