@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitAI Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#10b981',
+                        dark: '#1e293b',
+                        light: '#f8fafc',
+                        chart1: '#6366f1',
+                        chart2: '#10b981',
+                        chart3: '#f59e0b',
+                        chart4: '#8b5cf6'
+                    },
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: 0 },
+                            '100%': { opacity: 1 }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: 0 },
+                            '100%': { transform: 'translateY(0)', opacity: 1 }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            animation: fade-in 0.8s ease-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .summary-card {
+            animation: slide-up 0.6s ease-out;
+        }
+        
+        .summary-card:nth-child(1) { animation-delay: 0.1s; }
+        .summary-card:nth-child(2) { animation-delay: 0.2s; }
+        .summary-card:nth-child(3) { animation-delay: 0.3s; }
+        .summary-card:nth-child(4) { animation-delay: 0.4s; }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            animation: fade-in 1s ease-out;
+        }
+        
+        .chart-container:nth-child(1) { animation-delay: 0.2s; }
+        .chart-container:nth-child(2) { animation-delay: 0.3s; }
+        .chart-container:nth-child(3) { animation-delay: 0.4s; }
+        .chart-container:nth-child(4) { animation-delay: 0.5s; }
+        
+        .progress-ring {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .glow {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .trend-up {
+            color: #10b981;
+        }
+        
+        .trend-down {
+            color: #ef4444;
+        }
+        
+        .view-toggle {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 4px;
+        }
+        
+        .view-toggle button {
+            padding: 6px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .view-toggle button.active {
+            background: #6366f1;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-dark border-b border-gray-800 py-4 sticky top-0 z-50">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-primary p-2 rounded-lg">
+                    <i class="fas fa-dumbbell text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitAI Analytics</h1>
+            </div>
+            
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-home mr-2"></i>Home</a>
+                <a href="#" class="text-primary font-medium"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-fire mr-2"></i>Workouts</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-utensils mr-2"></i>Nutrition</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-cog mr-2"></i>Settings</a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="bg-gray-800 p-2 rounded-full relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                    </button>
+                </div>
+                <div class="relative group">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full object-cover border-2 border-primary">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Header -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">Fitness Analytics Dashboard</h1>
+                <p class="text-gray-400">Track your progress, analyze performance, and achieve your fitness goals</p>
+            </div>
+            <div class="mt-4 md:mt-0 view-toggle flex">
+                <button class="active" id="view-weekly">Weekly</button>
+                <button class="" id="view-monthly">Monthly</button>
+            </div>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="summary-card card bg-gradient-to-r from-primary/20 to-primary/10 p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Workouts Completed</h3>
+                        <p class="text-3xl font-bold">24</p>
+                    </div>
+                    <div class="bg-primary/20 p-3 rounded-lg">
+                        <i class="fas fa-dumbbell text-primary text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <span class="text-green-500 mr-2"><i class="fas fa-arrow-up"></i> 12%</span>
+                    <span class="text-gray-400 text-sm">from last week</span>
+                </div>
+            </div>
+            
+            <div class="summary-card card bg-gradient-to-r from-secondary/20 to-secondary/10 p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Calories Burned</h3>
+                        <p class="text-3xl font-bold">8,450</p>
+                    </div>
+                    <div class="bg-secondary/20 p-3 rounded-lg">
+                        <i class="fas fa-fire text-secondary text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <span class="text-green-500 mr-2"><i class="fas fa-arrow-up"></i> 18%</span>
+                    <span class="text-gray-400 text-sm">from last week</span>
+                </div>
+            </div>
+            
+            <div class="summary-card card bg-gradient-to-r from-amber-500/20 to-amber-500/10 p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Current Weight</h3>
+                        <p class="text-3xl font-bold">75.4 kg</p>
+                    </div>
+                    <div class="bg-amber-500/20 p-3 rounded-lg">
+                        <i class="fas fa-weight-scale text-amber-500 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <span class="text-green-500 mr-2"><i class="fas fa-arrow-down"></i> 1.2kg</span>
+                    <span class="text-gray-400 text-sm">since last month</span>
+                </div>
+            </div>
+            
+            <div class="summary-card card bg-gradient-to-r from-purple-500/20 to-purple-500/10 p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">AI Interactions</h3>
+                        <p class="text-3xl font-bold">42</p>
+                    </div>
+                    <div class="bg-purple-500/20 p-3 rounded-lg">
+                        <i class="fas fa-robot text-purple-500 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <span class="text-green-500 mr-2"><i class="fas fa-arrow-up"></i> 24%</span>
+                    <span class="text-gray-400 text-sm">from last week</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Weight Trend Chart -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">Weight & BMI Trend</h3>
+                    <div class="flex items-center text-sm">
+                        <span class="w-3 h-3 bg-chart1 rounded-full mr-2"></span>
+                        <span class="mr-4">Weight</span>
+                        <span class="w-3 h-3 bg-chart2 rounded-full mr-2"></span>
+                        <span>BMI</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="weightChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Workout Frequency Chart -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">Workout Frequency</h3>
+                    <div class="text-sm text-gray-400">Last 4 weeks</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="workoutChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Calories Burned Chart -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">Calories Burned</h3>
+                    <div class="flex items-center text-sm">
+                        <span class="w-3 h-3 bg-chart3 rounded-full mr-2"></span>
+                        <span class="mr-4">Cardio</span>
+                        <span class="w-3 h-3 bg-chart4 rounded-full mr-2"></span>
+                        <span>Strength</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="caloriesChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Macronutrients Chart -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">Macronutrient Breakdown</h3>
+                    <div class="text-sm text-gray-400">Average daily intake</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="macronutrientsChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Goal Progress Chart -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">Goal Progress</h3>
+                    <div class="text-sm text-gray-400">Current achievement</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="goalsChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- AI Usage Chart -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">AI Usage Analytics</h3>
+                    <div class="flex items-center text-sm">
+                        <span class="w-3 h-3 bg-chart1 rounded-full mr-2"></span>
+                        <span class="mr-4">Chats</span>
+                        <span class="w-3 h-3 bg-chart3 rounded-full mr-2"></span>
+                        <span>Workouts</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="aiUsageChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Section -->
+        <div class="card p-6 mt-8">
+            <h3 class="text-xl font-bold mb-6">Goal Achievement</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="progress-ring mb-4">
+                        <svg width="120" height="120" viewBox="0 0 120 120">
+                            <circle class="progress-ring__circle" stroke="#6366f1" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="125.6" fill="transparent" r="50" cx="60" cy="60"/>
+                        </svg>
+                        <div class="progress-text">60%</div>
+                    </div>
+                    <h4 class="font-bold mb-2">Weight Loss Goal</h4>
+                    <p class="text-sm text-gray-400 text-center">Target: 70kg (Current: 75.4kg)</p>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <div class="progress-ring mb-4">
+                        <svg width="120" height="120" viewBox="0 0 120 120">
+                            <circle class="progress-ring__circle" stroke="#10b981" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="62.8" fill="transparent" r="50" cx="60" cy="60"/>
+                        </svg>
+                        <div class="progress-text">80%</div>
+                    </div>
+                    <h4 class="font-bold mb-2">Workout Consistency</h4>
+                    <p class="text-sm text-gray-400 text-center">Target: 5 days/week (Achieved: 4 days)</p>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <div class="progress-ring mb-4">
+                        <svg width="120" height="120" viewBox="0 0 120 120">
+                            <circle class="progress-ring__circle" stroke="#f59e0b" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="157" fill="transparent" r="50" cx="60" cy="60"/>
+                        </svg>
+                        <div class="progress-text">50%</div>
+                    </div>
+                    <h4 class="font-bold mb-2">Nutrition Adherence</h4>
+                    <p class="text-sm text-gray-400 text-center">Following meal plan: 3.5 days/week</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-dark border-t border-gray-800 py-8 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="bg-primary p-2 rounded-lg">
+                            <i class="fas fa-dumbbell text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitAI Analytics</h2>
+                    </div>
+                    <p class="text-gray-400">AI-powered fitness insights for better results.</p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Features</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Progress Tracking</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Workout Analytics</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Nutrition Insights</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Goal Setting</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">AI Coaching</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Resources</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Blog</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Fitness Guides</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Nutrition Plans</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Community</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Support</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Newsletter</h3>
+                    <p class="text-gray-400 mb-4">Get fitness tips and analytics insights</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" class="flex-grow bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <button class="bg-primary hover:bg-indigo-700 text-white px-4 rounded-r-lg transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
+                <p>© 2023 FitAI Analytics. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Initialize charts when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Weight Trend Chart
+            const weightCtx = document.getElementById('weightChart').getContext('2d');
+            const weightChart = new Chart(weightCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    datasets: [
+                        {
+                            label: 'Weight (kg)',
+                            data: [79.2, 78.5, 77.8, 77.0, 76.5, 76.0, 75.4],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'BMI',
+                            data: [25.8, 25.6, 25.4, 25.1, 24.9, 24.7, 24.5],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Workout Frequency Chart
+            const workoutCtx = document.getElementById('workoutChart').getContext('2d');
+            const workoutChart = new Chart(workoutCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Workouts',
+                        data: [5, 6, 4, 7],
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Calories Burned Chart
+            const caloriesCtx = document.getElementById('caloriesChart').getContext('2d');
+            const caloriesChart = new Chart(caloriesCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Cardio',
+                            data: [420, 380, 450, 300, 480, 350, 400],
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Strength',
+                            data: [320, 350, 280, 400, 320, 380, 350],
+                            backgroundColor: '#8b5cf6',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Macronutrients Chart
+            const macrosCtx = document.getElementById('macronutrientsChart').getContext('2d');
+            const macrosChart = new Chart(macrosCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Protein', 'Carbs', 'Fats'],
+                    datasets: [{
+                        data: [40, 35, 25],
+                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#f8fafc',
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Goal Progress Chart
+            const goalsCtx = document.getElementById('goalsChart').getContext('2d');
+            const goalsChart = new Chart(goalsCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Weight Loss', 'Strength', 'Endurance', 'Flexibility', 'Nutrition'],
+                    datasets: [{
+                        label: 'Current Progress',
+                        data: [75, 85, 70, 60, 65],
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderColor: '#6366f1',
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            pointLabels: {
+                                color: '#f8fafc'
+                            },
+                            ticks: {
+                                backdropColor: 'transparent',
+                                color: 'rgba(255, 255, 255, 0.5)',
+                                stepSize: 20
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // AI Usage Chart
+            const aiCtx = document.getElementById('aiUsageChart').getContext('2d');
+            const aiChart = new Chart(aiCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Chat Requests',
+                            data: [8, 5, 6, 9, 7, 4, 6],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Workout Plans',
+                            data: [3, 4, 2, 5, 3, 4, 2],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // View toggle functionality
+            const weeklyBtn = document.getElementById('view-weekly');
+            const monthlyBtn = document.getElementById('view-monthly');
+            
+            weeklyBtn.addEventListener('click', function() {
+                weeklyBtn.classList.add('active');
+                monthlyBtn.classList.remove('active');
+                // In a real app, this would fetch weekly data
+            });
+            
+            monthlyBtn.addEventListener('click', function() {
+                monthlyBtn.classList.add('active');
+                weeklyBtn.classList.remove('active');
+                // In a real app, this would fetch monthly data
+            });
+        });
+    </script>
+</body>
+</html>
