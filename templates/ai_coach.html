@@ -1,0 +1,79 @@
+<div class="ai-coach-container">
+  <!-- Voice Chat Interface -->
+  <div class="voice-chat">
+    <button id="micBtn" class="mic-button">
+      <i class="fas fa-microphone"></i>
+    </button>
+    <div id="chatDisplay" class="chat-display"></div>
+  </div>
+  
+  <!-- Video Form Check -->
+  <div class="video-upload">
+    <input type="file" accept="video/*" id="videoUpload">
+    <div class="pose-feedback">
+      <canvas id="poseCanvas"></canvas>
+      <ul id="feedbackList"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// Voice Recognition
+const micBtn = document.getElementById('micBtn');
+const recognition = new webkitSpeechRecognition();
+recognition.lang = 'en-US';
+
+micBtn.addEventListener('click', () => {
+  recognition.start();
+});
+
+recognition.onresult = (event) => {
+  const transcript = event.results[0][0].transcript;
+  // Send to Flask backend
+  fetch('/ai-chat', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({message: transcript})
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Display text response
+    displayMessage(data.text);
+    
+    // Play audio response
+    const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+    audio.play();
+  });
+};
+
+// Video Analysis
+document.getElementById('videoUpload').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const formData = new FormData();
+  formData.append('video', file);
+
+  fetch('/video-form-check', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(feedback => {
+    feedback.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      document.getElementById('feedbackList').appendChild(li);
+    });
+    
+    // Visual feedback on canvas
+    drawPoseFeedback();
+  });
+});
+
+function drawPoseFeedback() {
+  // Simplified stick figure visualization
+  const canvas = document.getElementById('poseCanvas');
+  const ctx = canvas.getContext('2d');
+  // Draw body landmarks and feedback arrows
+  // (Implementation depends on your pose detection model)
+}
+</script>
