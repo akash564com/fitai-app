@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitCommunity - Social Fitness Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#10b981',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'bounce-slow': 'bounce 2s infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .badge-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .badge-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .profile-banner {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        
+        .leaderboard-item {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .leaderboard-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .challenge-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .message-card:nth-child(odd) {
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        .message-card:nth-child(even) {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        
+        .notification {
+            animation: pulse-slow 2s infinite;
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .trophy {
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+        }
+        
+        .pulse-icon {
+            animation: pulse-slow 2s infinite;
+        }
+        
+        .shine {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: rotate(30deg) translateX(-100%); }
+            100% { transform: rotate(30deg) translateX(100%); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-dark border-b border-gray-800 py-4 sticky top-0 z-50">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-primary p-2 rounded-lg">
+                    <i class="fas fa-dumbbell text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitCommunity</h1>
+            </div>
+            
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-home mr-2"></i>Home</a>
+                <a href="#" class="text-primary font-medium"><i class="fas fa-users mr-2"></i>Community</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-fire mr-2"></i>Workouts</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-utensils mr-2"></i>Nutrition</a>
+                <a href="#" class="text-light hover:text-primary transition"><i class="fas fa-chart-line mr-2"></i>Progress</a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="bg-gray-800 p-2 rounded-full relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center notification">3</span>
+                    </button>
+                </div>
+                <div class="relative group">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full object-cover border-2 border-primary">
+                    <div class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 hidden group-hover:block z-50">
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-user mr-2"></i>Profile</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-cog mr-2"></i>Settings</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex-grow container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Left Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- User Profile Card -->
+                <div class="card p-6">
+                    <div class="flex flex-col items-center">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-24 h-24 rounded-full object-cover border-4 border-primary">
+                            <div class="absolute bottom-0 right-0 bg-green-500 rounded-full p-1 border-2 border-dark">
+                                <i class="fas fa-check text-xs"></i>
+                            </div>
+                        </div>
+                        <h2 class="text-xl font-bold mt-4">Alex Johnson</h2>
+                        <p class="text-gray-400 text-sm">Fitness Enthusiast</p>
+                        
+                        <div class="flex justify-center space-x-4 mt-4">
+                            <div class="text-center">
+                                <p class="font-bold text-lg">42</p>
+                                <p class="text-gray-400 text-sm">Workouts</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="font-bold text-lg">28</p>
+                                <p class="text-gray-400 text-sm">Following</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="font-bold text-lg">35</p>
+                                <p class="text-gray-400 text-sm">Followers</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 w-full">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Level 7</span>
+                                <span>Level 8</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                <div class="bg-secondary h-2.5 rounded-full" style="width: 75%"></div>
+                            </div>
+                            <p class="text-xs text-center mt-1 text-gray-400">1,200 XP to next level</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="card p-6">
+                    <h3 class="font-bold text-lg mb-4 flex items-center">
+                        <i class="fas fa-chart-bar mr-2 text-primary"></i>Weekly Stats
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Workouts</span>
+                                <span>5/7</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-primary h-2 rounded-full" style="width: 71%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Calories</span>
+                                <span>8,200/10,000</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 82%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Steps</span>
+                                <span>68k/70k</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 97%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-center">
+                        <button class="bg-primary hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center transition">
+                            <i class="fas fa-share-alt mr-2"></i> Share Progress
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Badges Preview -->
+                <div class="card p-6">
+                    <h3 class="font-bold text-lg mb-4 flex items-center">
+                        <i class="fas fa-medal mr-2 text-yellow-400"></i>Recent Badges
+                    </h3>
+                    
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="badge-card bg-gradient-to-br from-yellow-500 to-yellow-700 p-3 rounded-lg flex flex-col items-center justify-center">
+                            <i class="fas fa-dumbbell text-2xl mb-1"></i>
+                            <p class="text-xs text-center">Strength Master</p>
+                        </div>
+                        
+                        <div class="badge-card bg-gradient-to-br from-green-500 to-green-700 p-3 rounded-lg flex flex-col items-center justify-center">
+                            <i class="fas fa-running text-2xl mb-1"></i>
+                            <p class="text-xs text-center">Marathoner</p>
+                        </div>
+                        
+                        <div class="badge-card bg-gradient-to-br from-blue-500 to-blue-700 p-3 rounded-lg flex flex-col items-center justify-center">
+                            <i class="fas fa-calendar-check text-2xl mb-1"></i>
+                            <p class="text-xs text-center">30-Day Streak</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <a href="#" class="text-sm text-primary hover:underline">View all badges</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Community Feed -->
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold mb-6">Community Feed</h2>
+                    
+                    <!-- Create Post -->
+                    <div class="mb-6 bg-gray-800 rounded-xl p-4">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-12 h-12 rounded-full">
+                            <div class="flex-grow">
+                                <textarea placeholder="Share your fitness journey..." class="w-full bg-gray-700 text-white rounded-lg p-3 min-h-[80px] focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+                                <div class="flex justify-between items-center mt-3">
+                                    <div class="flex space-x-3 text-gray-400">
+                                        <button class="hover:text-primary transition"><i class="fas fa-image"></i></button>
+                                        <button class="hover:text-primary transition"><i class="fas fa-video"></i></button>
+                                        <button class="hover:text-primary transition"><i class="fas fa-trophy"></i></button>
+                                    </div>
+                                    <button class="bg-primary hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition">Post</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feed Items -->
+                    <div class="space-y-6">
+                        <!-- Post 1 -->
+                        <div class="bg-gray-800 rounded-xl p-4">
+                            <div class="flex items-start space-x-3">
+                                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-12 h-12 rounded-full">
+                                <div class="flex-grow">
+                                    <div class="flex justify-between">
+                                        <div>
+                                            <h3 class="font-bold">Sarah Thompson</h3>
+                                            <p class="text-gray-400 text-sm">45 mins ago</p>
+                                        </div>
+                                        <button class="text-gray-400 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+                                    </div>
+                                    <p class="mt-2">Just completed my first marathon! 🏃‍♀️💨 26.2 miles of pure determination. Thanks to everyone in this community for the support and motivation!</p>
+                                    <div class="mt-3 flex items-center text-gray-400 text-sm">
+                                        <button class="flex items-center mr-4 hover:text-red-500 transition">
+                                            <i class="fas fa-heart mr-1"></i> 128
+                                        </button>
+                                        <button class="flex items-center hover:text-primary transition">
+                                            <i class="fas fa-comment mr-1"></i> 24
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Post 2 -->
+                        <div class="bg-gray-800 rounded-xl p-4">
+                            <div class="flex items-start space-x-3">
+                                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-12 h-12 rounded-full">
+                                <div class="flex-grow">
+                                    <div class="flex justify-between">
+                                        <div>
+                                            <h3 class="font-bold">Mike Rodriguez</h3>
+                                            <p class="text-gray-400 text-sm">2 hours ago</p>
+                                        </div>
+                                        <button class="text-gray-400 hover:text-white"><i class="fas fa-ellipsis-h"></i></button>
+                                    </div>
+                                    <p class="mt-2">New personal record on deadlift today! 405 lbs 🏋️‍♂️💪 Slowly but surely making progress. Consistency is key!</p>
+                                    <div class="mt-3">
+                                        <img src="https://images.unsplash.com/photo-1534367507877-0edd93bd013b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80" alt="Workout" class="rounded-lg mt-3 w-full">
+                                    </div>
+                                    <div class="mt-3 flex items-center text-gray-400 text-sm">
+                                        <button class="flex items-center mr-4 hover:text-red-500 transition">
+                                            <i class="fas fa-heart mr-1"></i> 89
+                                        </button>
+                                        <button class="flex items-center hover:text-primary transition">
+                                            <i class="fas fa-comment mr-1"></i> 17
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Leaderboard -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">Community Leaderboard</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-primary text-white px-3 py-1 rounded-lg text-sm">This Week</button>
+                            <button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg text-sm">This Month</button>
+                            <button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg text-sm">All Time</button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <!-- Top 1 -->
+                        <div class="leaderboard-item bg-gradient-to-r from-yellow-500/10 to-transparent p-4 rounded-lg flex items-center">
+                            <div class="w-8 h-8 flex items-center justify-center bg-yellow-500 rounded-full mr-4">
+                                <span class="font-bold">1</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full">
+                            <div class="ml-3 flex-grow">
+                                <h3 class="font-bold">James Wilson</h3>
+                                <p class="text-sm text-gray-400">12 workouts • 9,800 calories</p>
+                            </div>
+                            <div class="text-yellow-400 text-xl">
+                                <i class="fas fa-trophy trophy"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Top 2 -->
+                        <div class="leaderboard-item p-4 rounded-lg flex items-center">
+                            <div class="w-8 h-8 flex items-center justify-center bg-gray-600 rounded-full mr-4">
+                                <span class="font-bold">2</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full">
+                            <div class="ml-3 flex-grow">
+                                <h3 class="font-bold">Sarah Thompson</h3>
+                                <p class="text-sm text-gray-400">11 workouts • 9,200 calories</p>
+                            </div>
+                            <div class="text-gray-400 text-xl">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Top 3 -->
+                        <div class="leaderboard-item p-4 rounded-lg flex items-center">
+                            <div class="w-8 h-8 flex items-center justify-center bg-yellow-700 rounded-full mr-4">
+                                <span class="font-bold">3</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full">
+                            <div class="ml-3 flex-grow">
+                                <h3 class="font-bold">Mike Rodriguez</h3>
+                                <p class="text-sm text-gray-400">10 workouts • 8,750 calories</p>
+                            </div>
+                            <div class="text-yellow-700 text-xl">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Current User (4th) -->
+                        <div class="leaderboard-item bg-primary/10 p-4 rounded-lg flex items-center border border-primary/30">
+                            <div class="w-8 h-8 flex items-center justify-center bg-primary rounded-full mr-4">
+                                <span class="font-bold">4</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full">
+                            <div class="ml-3 flex-grow">
+                                <h3 class="font-bold">Alex Johnson</h3>
+                                <p class="text-sm text-gray-400">9 workouts • 8,200 calories</p>
+                            </div>
+                            <div class="text-primary text-xl">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 text-center">
+                        <button class="border border-primary text-primary hover:bg-primary/10 py-2 px-4 rounded-lg transition">
+                            View Full Leaderboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Active Challenges -->
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold mb-6">Active Challenges</h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Challenge 1 -->
+                        <div class="challenge-card p-4 rounded-xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 bg-primary px-3 py-1 text-xs font-bold rounded-bl-lg">
+                                Join Now!
+                            </div>
+                            <div class="flex items-center mb-3">
+                                <div class="bg-gradient-to-br from-purple-600 to-indigo-700 p-2 rounded-lg">
+                                    <i class="fas fa-bolt text-white"></i>
+                                </div>
+                                <h3 class="font-bold ml-3">HIIT Challenge</h3>
+                            </div>
+                            <p class="text-sm text-gray-300 mb-3">Complete 5 HIIT workouts this week</p>
+                            <div class="flex justify-between text-xs text-gray-400 mb-2">
+                                <span>Ends in 3 days</span>
+                                <span>85/200 participants</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2 mb-3">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 42%"></div>
+                            </div>
+                            <button class="w-full bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white py-2 rounded-lg text-sm font-medium transition">
+                                Join Challenge
+                            </button>
+                        </div>
+                        
+                        <!-- Challenge 2 -->
+                        <div class="challenge-card p-4 rounded-xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 bg-green-500 px-3 py-1 text-xs font-bold rounded-bl-lg">
+                                Active
+                            </div>
+                            <div class="flex items-center mb-3">
+                                <div class="bg-gradient-to-br from-green-600 to-emerald-700 p-2 rounded-lg">
+                                    <i class="fas fa-running text-white"></i>
+                                </div>
+                                <h3 class="font-bold ml-3">10K Steps Daily</h3>
+                            </div>
+                            <p class="text-sm text-gray-300 mb-3">Reach 10,000 steps for 7 consecutive days</p>
+                            <div class="flex justify-between text-xs text-gray-400 mb-2">
+                                <span>Day 4 of 7</span>
+                                <span>You: 6,850/10,000</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2 mb-3">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 68%"></div>
+                            </div>
+                            <button class="w-full bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white py-2 rounded-lg text-sm font-medium transition">
+                                View Progress
+                            </button>
+                        </div>
+                        
+                        <!-- Challenge 3 -->
+                        <div class="challenge-card p-4 rounded-xl">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-gradient-to-br from-red-600 to-orange-700 p-2 rounded-lg">
+                                    <i class="fas fa-dumbbell text-white"></i>
+                                </div>
+                                <h3 class="font-bold ml-3">Strength Builder</h3>
+                            </div>
+                            <p class="text-sm text-gray-300 mb-3">Increase your max lifts by 10% this month</p>
+                            <div class="flex justify-between text-xs text-gray-400 mb-2">
+                                <span>Ends in 12 days</span>
+                                <span>42/100 participants</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2 mb-3">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: 35%"></div>
+                            </div>
+                            <button class="w-full bg-gradient-to-r from-red-600 to-orange-700 hover:from-red-700 hover:to-orange-800 text-white py-2 rounded-lg text-sm font-medium transition">
+                                Join Challenge
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 text-center">
+                        <button class="border border-primary text-primary hover:bg-primary/10 py-2 px-4 rounded-lg transition">
+                            View All Challenges
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Community Chat -->
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold mb-6">Community Chat</h2>
+                    
+                    <div class="bg-gray-800 rounded-lg p-4 max-h-[300px] overflow-y-auto">
+                        <!-- Messages -->
+                        <div class="space-y-3">
+                            <!-- Message 1 -->
+                            <div class="message-card p-3 rounded-lg">
+                                <div class="flex items-start">
+                                    <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-8 h-8 rounded-full mt-1">
+                                    <div class="ml-2">
+                                        <div class="flex items-baseline">
+                                            <h4 class="font-bold text-sm">James Wilson</h4>
+                                            <span class="text-xs text-gray-400 ml-2">2 min ago</span>
+                                        </div>
+                                        <p class="text-sm">Anyone up for a group run this Saturday morning?</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Message 2 -->
+                            <div class="message-card p-3 rounded-lg">
+                                <div class="flex items-start">
+                                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-8 h-8 rounded-full mt-1">
+                                    <div class="ml-2">
+                                        <div class="flex items-baseline">
+                                            <h4 class="font-bold text-sm">Sarah Thompson</h4>
+                                            <span class="text-xs text-gray-400 ml-2">1 min ago</span>
+                                        </div>
+                                        <p class="text-sm">I'm in! What time are you thinking?</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Message 3 -->
+                            <div class="message-card p-3 rounded-lg">
+                                <div class="flex items-start">
+                                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-8 h-8 rounded-full mt-1">
+                                    <div class="ml-2">
+                                        <div class="flex items-baseline">
+                                            <h4 class="font-bold text-sm">Alex Johnson</h4>
+                                            <span class="text-xs text-gray-400 ml-2">Just now</span>
+                                        </div>
+                                        <p class="text-sm">Count me in too! 7am at Central Park?</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex">
+                        <input type="text" placeholder="Type your message..." class="flex-grow bg-gray-700 text-white rounded-l-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <button class="bg-primary hover:bg-indigo-700 text-white px-4 rounded-r-lg transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Friends Online -->
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold mb-6">Friends Online</h2>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center p-2 hover:bg-gray-800 rounded-lg transition">
+                            <div class="relative">
+                                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full">
+                                <div class="absolute bottom-0 right-0 bg-green-500 rounded-full w-3 h-3 border-2 border-dark"></div>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="font-bold">Sarah Thompson</h3>
+                                <p class="text-sm text-gray-400">Running now</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-2 hover:bg-gray-800 rounded-lg transition">
+                            <div class="relative">
+                                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full">
+                                <div class="absolute bottom-0 right-0 bg-green-500 rounded-full w-3 h-3 border-2 border-dark"></div>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="font-bold">Mike Rodriguez</h3>
+                                <p class="text-sm text-gray-400">At the gym</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-2 hover:bg-gray-800 rounded-lg transition">
+                            <div class="relative">
+                                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" alt="User" class="w-10 h-10 rounded-full">
+                                <div class="absolute bottom-0 right-0 bg-yellow-500 rounded-full w-3 h-3 border-2 border-dark"></div>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="font-bold">James Wilson</h3>
+                                <p class="text-sm text-gray-400">Idle • 5 min ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <button class="border border-primary text-primary hover:bg-primary/10 py-2 px-4 rounded-lg transition">
+                            View All Friends
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-dark border-t border-gray-800 py-8 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="bg-primary p-2 rounded-lg">
+                            <i class="fas fa-dumbbell text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">FitCommunity</h2>
+                    </div>
+                    <p class="text-gray-400">Join our community of fitness enthusiasts to achieve your goals together.</p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Features</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Workout Plans</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Nutrition Tracking</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Community Challenges</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Leaderboards</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">AI Coaching</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Company</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-primary transition">Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Newsletter</h3>
+                    <p class="text-gray-400 mb-4">Subscribe to get fitness tips and community updates</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" class="flex-grow bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <button class="bg-primary hover:bg-indigo-700 text-white px-4 rounded-r-lg transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
+                <p>© 2023 FitCommunity. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Floating Action Button -->
+    <div class="fixed bottom-6 right-6">
+        <button class="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition transform hover:scale-110 pulse-icon">
+            <i class="fas fa-plus text-xl"></i>
+        </button>
+    </div>
+    
+    <!-- Floating Badge -->
+    <div class="fixed top-24 right-6 bg-gradient-to-br from-yellow-500 to-yellow-700 p-3 rounded-lg shadow-lg floating">
+        <div class="flex items-center">
+            <i class="fas fa-trophy text-xl mr-2"></i>
+            <p class="text-sm">New achievement unlocked!</p>
+        </div>
+    </div>
+</body>
+</html>
