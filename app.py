@@ -1,3 +1,6 @@
+from flask import Flask, render_template, request, session, g
+from flask_babel import Babel, _, gettext
+
 from flask import Flask, jsonify, request, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
@@ -13,14 +16,15 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret')
 app.config['DATABASE'] = 'database.db'
 app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY')
-# app.py
-
-app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+app.config['BABEL_DEFAULT_LOCALE'] = 'en'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fitness.db'
 db = SQLAlchemy(app)
 
 
 
+# Configure Babel
+babel = Babel(app)
 
 # Database Models
 class User(db.Model):
@@ -161,6 +165,55 @@ def generate_workout_plan(goal, level, duration, equipment):
     return response.choices[0].text.strip()
 
 # Routes
+@babel.localeselector
+def get_locale():
+    # Check session first
+    if 'language' in session:
+        return session['language']
+    
+    # Then check browser preference
+    return request.accept_languages.best_match(['en', 'hi'])
+
+# Language switching endpoint
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    if lang in ['en', 'hi']:
+        session['language'] = lang
+    return '', 204
+
+# Example route with translations
+@app.route('/')
+def index():
+    return render_template('index.html', 
+                           title=_("Fitness Platform"),
+                           greeting=_("Welcome to your fitness journey"))
+
+# AI endpoint with language handling
+@app.route('/ai/chat', methods=['POST'])
+def ai_chat():
+    data = request.json
+    user_message = data['message']
+    user_language = session.get('language', 'en')
+    
+    # Prepare AI prompt based on language
+    if user_language == 'hi':
+        system_prompt = "आप एक फिटनेस विशेषज्ञ हैं। हिंदी में उत्तर दें।"
+    else:
+        system_prompt = "You are a fitness expert. Respond in English."
+    
+    # Call OpenAI API (pseudo-code)
+    ai_response = call_openai_api(
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ]
+    )
+    
+    return jsonify({
+        'response': ai_response,
+        'language': user_language
+    })
+    
 @app.route('/')
 def index():
     return render_template('index.html')
